@@ -21,11 +21,25 @@ int main()
     window.setVerticalSyncEnabled(true);
 
     Grid grid(20, 80, 45);
+    sf::Vector2f start(0.0f, 0.0f);
+    sf::Vector2f end(10.0f, 10.0f);
 
 	DisplayManager display_manager(window);
     display_manager.event_manager.addKeyPressedCallback(sf::Keyboard::C, [&](const sf::Event& ev) {
         const sf::Vector2i mouse_pos = sf::Mouse::getPosition(window);
-        grid.setCellAt(sf::Vector2f(mouse_pos.x, mouse_pos.y), 1);
+        grid.setCellAtWorld(sf::Vector2f(mouse_pos.x, mouse_pos.y), 1);
+    });
+
+    display_manager.event_manager.addKeyPressedCallback(sf::Keyboard::S, [&](const sf::Event& ev) {
+        const sf::Vector2i mouse_pos = sf::Mouse::getPosition(window);
+        start.x = mouse_pos.x;
+        start.y = mouse_pos.y;
+    });
+
+    display_manager.event_manager.addKeyPressedCallback(sf::Keyboard::E, [&](const sf::Event& ev) {
+        const sf::Vector2i mouse_pos = sf::Mouse::getPosition(window);
+        end.x = mouse_pos.x;
+        end.y = mouse_pos.y;
     });
 
     while (window.isOpen()) {
@@ -34,6 +48,25 @@ int main()
         window.clear(sf::Color::Black);
 
         Renderer::renderGrid(window, grid, display_manager.getRenderStates());
+
+        const float r = 8.0f;
+        sf::CircleShape c(r);
+        c.setOrigin(r, r);
+        c.setPosition(start);
+        c.setFillColor(sf::Color::Blue);
+        window.draw(c);
+
+        const HitPoint ray = grid.castRayToPoint(start, end);
+        c.setPosition(end);
+        c.setFillColor(ray.hit ? sf::Color::Red : sf::Color::Green);
+        window.draw(c);
+
+        sf::VertexArray sight_va(sf::Lines, 2);
+        sight_va[0].position = start;
+        sight_va[1].position = end;
+        sight_va[0].color = sf::Color::Red;
+        sight_va[1].color = sf::Color::Red;
+        window.draw(sight_va);
 
 		window.display();
     }

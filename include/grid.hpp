@@ -38,45 +38,56 @@ public:
 		, data(Tools::as<uint64_t>(width) * Tools::as<uint64_t>(height), 0u)
 	{}
 
-	HitPoint castRayToPoint(const sf::Vector2f& start, const sf::Vector2f& end) const;
-
-	HitPoint castRay(const sf::Vector2f& start, const sf::Vector2f& direction, const float max_dist) const
+	HitPoint castRayToPoint(const sf::Vector2f& start, const sf::Vector2f& end)
 	{
-		sf::Vector2f inv_direction(1.0f / direction.x, 1.0f / direction.y);
+		return castRay(start, Tools::normalize(end - start), Tools::length(end - start));
+	}
+
+	HitPoint castRay(const sf::Vector2f& start, const sf::Vector2f& direction, const float max_dist)
+	{
+		clearDebug();
+
+		const float cell_size_f = Tools::as<float>(cell_size);
+		const sf::Vector2f inv_direction(1.0f / direction.x, 1.0f / direction.y);
 		sf::Vector2i cell_coords = toGridCoords(start);
 		const sf::Vector2i step = Tools::vsign(direction);
-		sf::Vector2f t_max((cell_coords.x - (step.x <= 0)) * cell_size, (cell_coords.y - (step.y <= 0)) * cell_size);
-		t_max -= start;
-		t_max.x *= inv_direction.x;
-		t_max.y *= inv_direction.y;
-		sf::Vector2f t_d(Tools::vabs(sf::Vector2f(cell_size * inv_direction.x, cell_size * inv_direction.y)));
-		float distance = 0.0f;
-		do {
-			if (getCellContentAt(step.x, step.y)) {
+		sf::Vector2f t_max;
+
+		sf::Vector2f t_d(Tools::vabs(sf::Vector2f(cell_size_f * inv_direction.x, cell_size_f * inv_direction.y)));
+		
+		t_max.x = ((cell_coords.x + (step.x > 0)) * cell_size_f - start.x) * inv_direction.x;
+		t_max.y = ((cell_coords.y + (step.y > 0)) * cell_size_f - start.y) * inv_direction.y;
+		
+		while (std::min(t_max.x, t_max.y) < max_dist) {
+			if (getCellContentAt(cell_coords.x, cell_coords.y) == 1) {
 				return HitPoint(true);
 			}
 
+			setCellAt(cell_coords.x, cell_coords.y, 2);
+
 			if (t_max.x < t_max.y) {
 				t_max.x += t_d.x;
-				distance += t_d.x;
 				cell_coords.x += step.x;
 			}
 			else {
 				t_max.y += t_d.y;
-				distance += t_d.y;
 				cell_coords.y += step.y;
 			}
-		} while (distance < max_dist);
+		}
 
 		return HitPoint(false);
 	}
 
-	void setCellAt(const sf::Vector2f& world_position, uint8_t value)
+	void setCellAtWorld(const sf::Vector2f& world_position, uint8_t value)
 	{
-		std::cout << "OK" << std::endl;
 		const sf::Vector2i grid_coords = toGridCoords(world_position);
-		if (checkCoords(grid_coords.x, grid_coords.y)) {
-			data[getIndexFromCoords(grid_coords.x, grid_coords.y)] = value;
+		setCellAt(grid_coords.x, grid_coords.y, value);
+	}
+
+	void setCellAt(int32_t x, int32_t y, uint8_t value)
+	{
+		if (checkCoords(x, y)) {
+			data[getIndexFromCoords(x, y)] = value;
 		}
 	}
 
@@ -98,7 +109,7 @@ private:
 	int32_t cell_size;
 	int32_t width;
 	int32_t height;
-	std::vector<uint8_t> data;
+	mutable std::vector<uint8_t> data;
 
 private:
 	sf::Vector2i toGridCoords(const sf::Vector2f& v) const
@@ -106,9 +117,13 @@ private:
 		return sf::Vector2i(v.x / cell_size, v.y / cell_size);
 	}
 
-	bool checkCondition() const
+	void clearDebug()
 	{
-
+		for (uint8_t& c : data) {
+			if (c == 2) {
+				c = 0;
+			}
+		}
 	}
 
 	uint64_t getIndexFromCoords(int32_t x, int32_t y) const

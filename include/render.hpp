@@ -18,7 +18,15 @@ struct Renderer
 				va[4 * index + 2].position = sf::Vector2f((x+1) * cs, (y+1) * cs);
 				va[4 * index + 3].position = sf::Vector2f(x * cs, (y+1) * cs);
 
-				sf::Color color = grid.getCellContentAt(x, y) ? sf::Color::Black : sf::Color::White;
+				sf::Color color = sf::Color::White;
+				const uint8_t cell_value = grid.getCellContentAt(x, y);
+				if (cell_value == 1) {
+					color = sf::Color::Black;
+				}
+				else if (cell_value == 2) {
+					color = sf::Color::Cyan;
+				}
+
 				va[4 * index + 0].color = color;
 				va[4 * index + 1].color = color;
 				va[4 * index + 2].color = color;
