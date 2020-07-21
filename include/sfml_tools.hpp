@@ -16,7 +16,7 @@ struct Tools
 		return sf::Vector2f(v.x * inv_length, v.y * inv_length);
 	}
 
-	template<typename T, typename U>
+	template<typename U, typename T>
 	static U as(const T& obj)
 	{
 		return static_cast<U>(obj);
@@ -25,19 +25,19 @@ struct Tools
 	template<typename T>
 	static T sign(T x)
 	{
-		return as<T>(1) * (x >= as<T>(0)) + as<T>(-1) * (x < as<T>(0));
+		return (x >= as<int, T>(0)) + as<int, T>(-1) * (x < as<int, T>(0));
 	}
 
 	template<typename T>
 	static sf::Vector2i vsign(const sf::Vector2<T>& v)
 	{
-		const T zero = as<T>(0);
-		return sf::Vector2i(sign(v.x), sign(v.y));
+		const T zero = 0;
+		return sf::Vector2i(as<T>(sign(v.x)), as<T>(sign(v.y)));
 	}
 
 	template<typename T>
 	static sf::Vector2<T> vabs(const sf::Vector2<T>& v)
 	{
-		return sf::Vector2i(std::abs(v.x), std::abs(v.y));
+		return sf::Vector2<T>(std::abs(v.x), std::abs(v.y));
 	}
 };

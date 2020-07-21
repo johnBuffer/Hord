@@ -6,6 +6,8 @@
 #include <fstream>
 
 #include "display_manager.hpp"
+#include "grid.hpp"
+#include "render.hpp"
 
 
 int main()
@@ -18,12 +20,20 @@ int main()
     sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Hord", sf::Style::Default, settings);
     window.setVerticalSyncEnabled(true);
 
+    Grid grid(20, 80, 45);
+
 	DisplayManager display_manager(window);
- 
+    display_manager.event_manager.addKeyPressedCallback(sf::Keyboard::C, [&](const sf::Event& ev) {
+        const sf::Vector2i mouse_pos = sf::Mouse::getPosition(window);
+        grid.setCellAt(sf::Vector2f(mouse_pos.x, mouse_pos.y), 1);
+    });
+
     while (window.isOpen()) {
-        sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+        display_manager.processEvents();
 
         window.clear(sf::Color::Black);
+
+        Renderer::renderGrid(window, grid, display_manager.getRenderStates());
 
 		window.display();
     }
