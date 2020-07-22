@@ -12,7 +12,7 @@
 
 int main()
 {
-	sf::ContextSettings settings;
+    sf::ContextSettings settings;
     settings.antialiasingLevel = 8;
 	constexpr uint32_t WinWidth  = 1600;
 	constexpr uint32_t WinHeight = 900;

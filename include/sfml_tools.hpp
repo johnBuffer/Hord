@@ -40,4 +40,10 @@ struct Tools
 	{
 		return sf::Vector2<T>(std::abs(v.x), std::abs(v.y));
 	}
+
+	template<typename T>
+	static const T* asArray(sf::Vector2<T>& v)
+	{
+		return (const T*)&v;
+	}
 };

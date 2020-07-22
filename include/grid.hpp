@@ -3,6 +3,7 @@
 #include <SFML/System/Vector2.hpp>
 #include <sfml_tools.hpp>
 #include <iostream>
+#include "vec.hpp"
 
 
 struct HitPoint
@@ -45,34 +46,27 @@ public:
 
 	HitPoint castRay(const sf::Vector2f& start, const sf::Vector2f& direction, const float max_dist)
 	{
-		clearDebug();
-
 		const float cell_size_f = Tools::as<float>(cell_size);
-		const sf::Vector2f inv_direction(1.0f / direction.x, 1.0f / direction.y);
-		sf::Vector2i cell_coords = toGridCoords(start);
-		const sf::Vector2i step = Tools::vsign(direction);
-		sf::Vector2f t_max;
+		const float inv_direction[]{ 1.0f / direction.x, 1.0f / direction.y };
+		int32_t cell_coords[2];
+		toGridCoords(start, cell_coords);
+		const int32_t step[]{ Tools::sign(direction.x), Tools::sign(direction.y) };
+		const float t_d[]{ std::abs(cell_size_f * inv_direction[0]), std::abs(cell_size_f * inv_direction[1]) };
 
-		sf::Vector2f t_d(Tools::vabs(sf::Vector2f(cell_size_f * inv_direction.x, cell_size_f * inv_direction.y)));
-		
-		t_max.x = ((cell_coords.x + (step.x > 0)) * cell_size_f - start.x) * inv_direction.x;
-		t_max.y = ((cell_coords.y + (step.y > 0)) * cell_size_f - start.y) * inv_direction.y;
-		
-		while (std::min(t_max.x, t_max.y) < max_dist) {
-			if (getCellContentAt(cell_coords.x, cell_coords.y) == 1) {
+		float t_max[]{
+			((cell_coords[0] + (step[0] > 0)) * cell_size_f - start.x) * inv_direction[0],
+			((cell_coords[1] + (step[1] > 0)) * cell_size_f - start.y) * inv_direction[1]
+		};
+
+		uint32_t min_index = (t_max[0] >= t_max[1]);
+		while (t_max[min_index] < max_dist) {
+			if (getCellContentAt(cell_coords[0], cell_coords[1]) == 1) {
 				return HitPoint(true);
 			}
 
-			setCellAt(cell_coords.x, cell_coords.y, 2);
-
-			if (t_max.x < t_max.y) {
-				t_max.x += t_d.x;
-				cell_coords.x += step.x;
-			}
-			else {
-				t_max.y += t_d.y;
-				cell_coords.y += step.y;
-			}
+			t_max[min_index] += t_d[min_index];
+			cell_coords[min_index] += step[min_index];
+			min_index = (t_max[0] >= t_max[1]);
 		}
 
 		return HitPoint(false);
@@ -115,6 +109,12 @@ private:
 	sf::Vector2i toGridCoords(const sf::Vector2f& v) const
 	{
 		return sf::Vector2i(v.x / cell_size, v.y / cell_size);
+	}
+
+	void toGridCoords(const sf::Vector2f& v, int32_t* out) const
+	{
+		out[0] = v.x / cell_size;
+		out[1] = v.y / cell_size;
 	}
 
 	void clearDebug()
