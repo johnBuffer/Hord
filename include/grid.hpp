@@ -28,6 +28,12 @@ struct GridInfo
 	int32_t width, height;
 };
 
+struct Cell
+{
+	uint8_t type;
+	std::array<
+};
+
 
 struct Grid
 {
@@ -46,11 +52,11 @@ public:
 
 	HitPoint castRay(const sf::Vector2f& start, const sf::Vector2f& direction, const float max_dist)
 	{
-		const float cell_size_f = Tools::as<float>(cell_size);
-		const float inv_direction[]{ 1.0f / direction.x, 1.0f / direction.y };
 		int32_t cell_coords[2];
 		toGridCoords(start, cell_coords);
 		const int32_t step[]{ Tools::sign(direction.x), Tools::sign(direction.y) };
+		const float cell_size_f = Tools::as<float>(cell_size);
+		const float inv_direction[]{ 1.0f / direction.x, 1.0f / direction.y };
 		const float t_d[]{ std::abs(cell_size_f * inv_direction[0]), std::abs(cell_size_f * inv_direction[1]) };
 
 		float t_max[]{
