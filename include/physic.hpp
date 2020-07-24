@@ -19,6 +19,11 @@ struct Vec2
 		return x * x + y * y;
 	}
 
+	float getLength() const
+	{
+		return sqrt(getLength2());
+	}
+
 	Vec2 operator/(float f) const
 	{
 		const float inv = 1.0f / f;
@@ -50,6 +55,31 @@ struct Vec2
 	{
 		x -= other.x;
 		y -= other.y;
+	}
+
+	void rotate(const Vec2& origin, float angle)
+	{
+		const Vec2 v = *this - origin;
+
+		// This should be precomputed
+		const float ca = cos(angle);
+		const float sa = sin(angle);
+
+		const float new_x = v.x * ca - v.y * sa;
+		const float new_y = v.x * sa + v.y * ca;
+
+		x = new_x + origin.x;
+		y = new_y + origin.y;
+	}
+
+	float dot(const Vec2& other) const
+	{
+		return x * other.x + y * other.y;
+	}
+
+	Vec2 getNormalized() const
+	{
+		return (*this) / getLength();
 	}
 
 	float x, y;
@@ -159,10 +189,9 @@ struct ComposedObject
 	ComposedObject()
 		: center_of_mass()
 		, speed()
-		, angular_speed(0.0f)
-	{
-
-	}
+		, angular_speed(10.0f)
+		, angle(0.5f)
+	{}
 
 	void addAtom(const Vec2& p)
 	{
@@ -203,15 +232,33 @@ struct ComposedObject
 	{
 		speed += Vec2(0.0f, 100.0f) * dt;
 		translate(speed * dt);
+		computeCenterOfMass();
+
+		angle += angular_speed * dt;
+		rotate(angular_speed * dt);
 
 		solveBoundaryCollisions();
 		Vec2 delta_p(0.0f, 0.0f);
+		float delta_r = 0.0f;
 		for (Atom& a : atoms) {
 			delta_p += a.frame_move;
+			delta_r += getRotationDelta(a);
 			a.reset();
 		}
 		translate(delta_p);
 		speed += delta_p * 10.0f;
+	}
+
+	float getRotationDelta(const Atom& a) const
+	{
+		const Vec2 to_com = center_of_mass - a.point.coords;
+		// Could be pre computed
+		const float length = to_com.getLength();
+		if (length > 0.001f) {
+			const Vec2 to_com_v = to_com / length;
+		}
+
+
 	}
 
 	void translate(const Vec2& v)
@@ -221,10 +268,19 @@ struct ComposedObject
 		}
 	}
 
+	void rotate(float r)
+	{
+		for (Atom& a : atoms) {
+			a.point.coords.rotate(center_of_mass, r);
+		}
+	}
+
 	std::vector<Atom> atoms;
 	Vec2 center_of_mass;
 	Vec2 speed;
+
 	float angular_speed;
+	float angle;
 
 	const Vec2 boundaries_min = Vec2(50.0f, 50.0f);
 	const Vec2 boundaries_max = Vec2(1550.0f, 850.0f);
