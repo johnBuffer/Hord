@@ -25,6 +25,11 @@ struct Vec2
 		return Vec2(x * inv, y * inv);
 	}
 
+	Vec2 operator*(float f) const
+	{
+		return Vec2(x * f, y * f);
+	}
+
 	Vec2 operator-(const Vec2& other) const
 	{
 		return Vec2(x - other.x, y - other.y);
@@ -104,35 +109,148 @@ struct VerletPoint
 
 struct Atom
 {
-	VerletPoint point;
-	float mass;
+	Atom()
+		: point()
+		, frame_move()
+		, mass(1.0f)
+	{}
 
-	float radius = 12.0f;
+	Atom(const Vec2& p)
+		: point(p.x, p.y)
+		, frame_move()
+		, mass(1.0f)
+	{}
 
 	float getDistance2With(const Atom& other) const
 	{
 		return point.getDistance2With(other.point);
 	}
+
+	void move(const Vec2& v)
+	{
+		frame_move += v;
+	}
+
+	void moveTo(const Vec2& p)
+	{
+		const Vec2 v = p - point.coords;
+		move(v);
+	}
+
+	void update(float dt)
+	{
+
+	}
+
+	void reset()
+	{
+		frame_move = {};
+	}
+
+	VerletPoint point;
+	Vec2 frame_move;
+	float mass;
+	float radius = 12.0f;
+};
+
+
+struct ComposedObject
+{
+	ComposedObject()
+		: center_of_mass()
+		, speed()
+		, angular_speed(0.0f)
+	{
+
+	}
+
+	void addAtom(const Vec2& p)
+	{
+		atoms.emplace_back(p);
+	}
+
+	void computeCenterOfMass()
+	{
+		Vec2 com;
+		for (const Atom& a : atoms) {
+			com += a.point.coords;
+		}
+		center_of_mass = com / float(atoms.size());
+	}
+
+	void solveBoundaryCollisions()
+	{
+		for (Atom& a : atoms) {
+			Vec2 p = a.point.coords;
+			if (a.point.coords.x > boundaries_max.x - a.radius) {
+				p.x = boundaries_max.x - a.radius;
+			}
+			else if (a.point.coords.x < boundaries_min.x + a.radius) {
+				p.x = boundaries_min.x + a.radius;
+			}
+
+			if (a.point.coords.y > boundaries_max.y - a.radius) {
+				p.y = boundaries_max.y - a.radius;
+			}
+			else if (a.point.coords.y < boundaries_min.y + a.radius) {
+				p.y = boundaries_min.y + a.radius;
+			}
+			a.moveTo(p);
+		}
+	}
+
+	void update(float dt)
+	{
+		speed += Vec2(0.0f, 100.0f) * dt;
+		translate(speed * dt);
+
+		solveBoundaryCollisions();
+		Vec2 delta_p(0.0f, 0.0f);
+		for (Atom& a : atoms) {
+			delta_p += a.frame_move;
+			a.reset();
+		}
+		translate(delta_p);
+		speed += delta_p * 10.0f;
+	}
+
+	void translate(const Vec2& v)
+	{
+		for (Atom& a : atoms) {
+			a.point.coords += v;
+		}
+	}
+
+	std::vector<Atom> atoms;
+	Vec2 center_of_mass;
+	Vec2 speed;
+	float angular_speed;
+
+	const Vec2 boundaries_min = Vec2(50.0f, 50.0f);
+	const Vec2 boundaries_max = Vec2(1550.0f, 850.0f);
 };
 
 
 struct Solver
 {
-
 	void solveBoundaryCollisions()
 	{
 		for (Atom& a : atoms) {
-			if (a.point.coords.x > boundaries.x - a.radius) {
-				a.point.coords.x = boundaries.x - a.radius;
+			Vec2 p = a.point.coords;
+			if (a.point.coords.x > boundaries_max.x - a.radius) {
+				p.x = boundaries_max.x - a.radius;
+			}
+			else if (a.point.coords.x < boundaries_min.x + a.radius) {
+				p.x = boundaries_min.x + a.radius;
 			}
 
-			if (a.point.coords.x < a.radius) {
-				a.point.coords.x = a.radius;
+			if (a.point.coords.y > boundaries_max.y - a.radius) {
+				p.y = boundaries_max.y - a.radius;
 			}
-
-			if (a.point.coords.y > boundaries.y - a.radius) {
-				a.point.coords.y = boundaries.y - a.radius;
+			else if (a.point.coords.y < boundaries_min.y + a.radius) {
+				p.y = boundaries_min.y + a.radius;
 			}
+			a.moveTo(p);
 		}
 	}
 
@@ -167,14 +285,16 @@ struct Solver
 			a.point.accelerate(gravity);
 		}
 
-		solveCollisions();
+		//solveCollisions();
 		solveBoundaryCollisions();
 
-		for (Atom& a : atoms) {
+		/*for (Atom& a : atoms) {
 			a.point.update(dt);
-		}
+		}*/
 	}
 
-	const Vec2 boundaries = Vec2(1600.0f, 900.0f);
+	const Vec2 boundaries_min = Vec2(50.0f, 50.0f);
+	const Vec2 boundaries_max = Vec2(1550.0f, 850.0f);
 	std::vector<Atom> atoms;
 };
+

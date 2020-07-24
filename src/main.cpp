@@ -9,6 +9,7 @@
 #include "grid.hpp"
 #include "render.hpp"
 #include "agent.hpp"
+#include "physic.hpp"
 
 
 int main()
@@ -31,6 +32,20 @@ int main()
         agents.emplace_back(rand()%WinWidth, rand() % WinHeight);
     }
 
+    /*Solver solver;
+    for (uint32_t i(agents_count); i--;) {
+        solver.atoms.emplace_back();
+    }*/
+
+    ComposedObject object;
+
+    const float atom_radius = 12.0f;
+    for (uint32_t x(0); x < 5; ++x) {
+        for (uint32_t y(0); y < 5; ++y) {
+            object.addAtom(Vec2(150.0f + x * 2.0f * atom_radius, 70.0f + y * 2.0f * atom_radius));
+        }
+    }
+
 	DisplayManager display_manager(window);
     display_manager.event_manager.addKeyPressedCallback(sf::Keyboard::C, [&](const sf::Event& ev) {
         const sf::Vector2i mouse_pos = sf::Mouse::getPosition(window);
@@ -49,41 +64,19 @@ int main()
         end.y = mouse_pos.y;
     });
 
+    const float dt = 0.008f;
+
     while (window.isOpen()) {
         display_manager.processEvents();
         const sf::Vector2i mouse_pos = sf::Mouse::getPosition(window);
 
-        for (Agent& a : agents) {
-            a.update(sf::Vector2f(mouse_pos.x, mouse_pos.y), grid, 0.016f);
-        }
+        object.update(dt);
 
         window.clear(sf::Color::Black);
 
         const sf::RenderStates rs = display_manager.getRenderStates();
-        Renderer::renderGrid(window, grid, rs);
 
-       /* const float r = 8.0f;
-        sf::CircleShape c(r);
-        c.setOrigin(r, r);
-        c.setPosition(start);
-        c.setFillColor(sf::Color::Blue);
-        window.draw(c);
-
-        const HitPoint ray = grid.castRayToPoint(start, end);
-        c.setPosition(end);
-        c.setFillColor(ray.hit ? sf::Color::Red : sf::Color::Green);
-        window.draw(c);
-
-        sf::VertexArray sight_va(sf::Lines, 2);
-        sight_va[0].position = start;
-        sight_va[1].position = end;
-        sight_va[0].color = sf::Color::Red;
-        sight_va[1].color = sf::Color::Red;
-        window.draw(sight_va);*/
-
-        for (const Agent& a : agents) {
-            a.draw(window, rs);
-        }
+        Renderer::renderAtoms(window, object, rs);
 
 		window.display();
     }

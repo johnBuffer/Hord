@@ -3,7 +3,9 @@
 #include <SFML/System/Vector2.hpp>
 #include <sfml_tools.hpp>
 #include <iostream>
+#include <array>
 #include "vec.hpp"
+#include "physic.hpp"
 
 
 struct HitPoint
@@ -28,10 +30,12 @@ struct GridInfo
 	int32_t width, height;
 };
 
+
 struct Cell
 {
+	uint8_t count;
 	uint8_t type;
-	std::array<
+	std::array<Atom, 10> objects;
 };
 
 

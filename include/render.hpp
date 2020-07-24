@@ -1,6 +1,7 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 #include "grid.hpp"
+#include "physic.hpp"
 
 
 struct Renderer
@@ -35,5 +36,17 @@ struct Renderer
 		}
 
 		target.draw(va, rs);
+	}
+
+	static void renderAtoms(sf::RenderTarget& target, const ComposedObject& object, const sf::RenderStates& rs)
+	{
+		for (const Atom& a : object.atoms) {
+			const float radius = a.radius;
+			sf::CircleShape c(radius);
+			c.setOrigin(radius, radius);
+			c.setFillColor(sf::Color::Green);
+			c.setPosition(a.point.coords.x, a.point.coords.y);
+			target.draw(c, rs);
+		}
 	}
 };
