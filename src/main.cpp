@@ -32,17 +32,13 @@ int main()
         agents.emplace_back(rand()%WinWidth, rand() % WinHeight);
     }
 
-    /*Solver solver;
-    for (uint32_t i(agents_count); i--;) {
-        solver.atoms.emplace_back();
-    }*/
+    Solver solver;
 
-    ComposedObject object;
-
+    solver.objects.emplace_back();
     const float atom_radius = 12.0f;
     for (uint32_t x(0); x < 5; ++x) {
         for (uint32_t y(0); y < 5; ++y) {
-            object.addAtom(Vec2(150.0f + x * 2.0f * atom_radius, 70.0f + y * 2.0f * atom_radius));
+            solver.objects.back().addAtom(Vec2(150.0f + x * 2.0f * atom_radius, 70.0f + y * 2.0f * atom_radius));
         }
     }
 
@@ -59,24 +55,29 @@ int main()
     });
 
     display_manager.event_manager.addKeyPressedCallback(sf::Keyboard::E, [&](const sf::Event& ev) {
-        const sf::Vector2i mouse_pos = sf::Mouse::getPosition(window);
-        end.x = mouse_pos.x;
-        end.y = mouse_pos.y;
+        solver.objects.emplace_back();
+        for (uint32_t x(0); x < 5; ++x) {
+            for (uint32_t y(0); y < 5; ++y) {
+                solver.objects.back().addAtom(Vec2(157.0f + x * 2.0f * atom_radius, 170.0f + y * 2.0f * atom_radius));
+            }
+        }
     });
 
-    const float dt = 0.008f;
+    const float dt = 0.016f;
 
     while (window.isOpen()) {
         display_manager.processEvents();
         const sf::Vector2i mouse_pos = sf::Mouse::getPosition(window);
 
-        object.update(dt);
+        solver.update(dt);
 
         window.clear(sf::Color::Black);
 
         const sf::RenderStates rs = display_manager.getRenderStates();
 
-        Renderer::renderAtoms(window, object, rs);
+        for (ComposedObject& o : solver.objects) {
+            Renderer::renderAtoms(window, o, rs);
+        }
 
 		window.display();
     }

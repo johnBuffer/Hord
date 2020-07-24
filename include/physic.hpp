@@ -72,6 +72,11 @@ struct Vec2
 		y = new_y + origin.y;
 	}
 
+	Vec2 getNormal() const
+	{
+		return Vec2(-y, x);
+	}
+
 	float dot(const Vec2& other) const
 	{
 		return x * other.x + y * other.y;
@@ -175,6 +180,7 @@ struct Atom
 	void reset()
 	{
 		frame_move = {};
+		point.acceleration = {};
 	}
 
 	VerletPoint point;
@@ -189,7 +195,7 @@ struct ComposedObject
 	ComposedObject()
 		: center_of_mass()
 		, speed()
-		, angular_speed(10.0f)
+		, angular_speed(0.10f)
 		, angle(0.5f)
 	{}
 
@@ -230,13 +236,16 @@ struct ComposedObject
 
 	void update(float dt)
 	{
-		speed += Vec2(0.0f, 100.0f) * dt;
+		speed += Vec2(0.0f, 400.0f) * dt;
 		translate(speed * dt);
 		computeCenterOfMass();
 
 		angle += angular_speed * dt;
 		rotate(angular_speed * dt);
+	}
 
+	void solveCollisions()
+	{
 		solveBoundaryCollisions();
 		Vec2 delta_p(0.0f, 0.0f);
 		float delta_r = 0.0f;
@@ -246,7 +255,9 @@ struct ComposedObject
 			a.reset();
 		}
 		translate(delta_p);
-		speed += delta_p * 10.0f;
+		rotate(delta_r);
+		angular_speed += delta_r;
+		speed += delta_p;
 	}
 
 	float getRotationDelta(const Atom& a) const
@@ -256,9 +267,13 @@ struct ComposedObject
 		const float length = to_com.getLength();
 		if (length > 0.001f) {
 			const Vec2 to_com_v = to_com / length;
+			const Vec2 to_com_normal = to_com_v.getNormal();
+			const float strength = to_com_normal.dot(a.point.coords.getNormalized()) / length;
+
+			return strength * a.frame_move.getLength();
 		}
 
-
+		return 0.0f;
 	}
 
 	void translate(const Vec2& v)
@@ -289,68 +304,55 @@ struct ComposedObject
 
 struct Solver
 {
-	void solveBoundaryCollisions()
+	void solveCollisions()
 	{
-		for (Atom& a : atoms) {
-			Vec2 p = a.point.coords;
-			if (a.point.coords.x > boundaries_max.x - a.radius) {
-				p.x = boundaries_max.x - a.radius;
+		const uint64_t objects_count = objects.size();
+		for (uint64_t i(0); i<objects_count; ++i) {
+			for (Atom& a : objects[i].atoms) {
+				for (uint64_t k(i + 1); k < objects_count; ++k) {
+					solveCollisionWithOther(a, objects[k]);
+				}
 			}
-			else if (a.point.coords.x < boundaries_min.x + a.radius) {
-				p.x = boundaries_min.x + a.radius;
-			}
-
-			if (a.point.coords.y > boundaries_max.y - a.radius) {
-				p.y = boundaries_max.y - a.radius;
-			}
-			else if (a.point.coords.y < boundaries_min.y + a.radius) {
-				p.y = boundaries_min.y + a.radius;
-			}
-			a.moveTo(p);
 		}
 	}
 
-	void solveCollisions()
+	void solveCollisionWithOther(Atom& a1, ComposedObject& other)
 	{
-		const uint64_t atoms_count = atoms.size();
-		for (uint64_t i(0); i++;) {
-			Atom& a1 = atoms[i];
-			for (uint64_t k(i+1); k++;) {
-				Atom& a2 = atoms[k];
-				const Vec2 v = a1.point.coords - a2.point.coords;
-				const float dist2 = v.getLength2();
-				const float min_dist = 2.0f * a1.radius;
+		for (Atom& a2 : other.atoms) {
+			const Vec2 v = a1.point.coords - a2.point.coords;
+			const float dist2 = v.getLength2();
+			const float min_dist = 2.0f * a1.radius;
 
-				if (dist2 < min_dist * min_dist) {
-					const float dist = sqrt(dist2);
-					const float delta_dist = min_dist - dist;
-					const Vec2 axis = v / dist;
+			if (dist2 < min_dist * min_dist) {
+				const float dist = sqrt(dist2);
+				const float delta_dist = min_dist - dist;
+				const Vec2 axis = v / dist;
 
-					const Vec2 positions_correction(delta_dist * axis.x, delta_dist * axis.y);
-					a1.point.move( positions_correction);
-					a2.point.move(-positions_correction);
-				}
+				const Vec2 positions_correction(delta_dist * axis.x, delta_dist * axis.y);
+				a1.move(positions_correction);
+				a2.move(-positions_correction);
 			}
 		}
 	}
 
 	void update(float dt)
 	{
-		const Vec2 gravity(0.0f, 10.0f);
-		for (Atom& a : atoms) {
-			a.point.accelerate(gravity);
+		for (ComposedObject& o : objects) {
+			o.update(dt);
 		}
 
-		//solveCollisions();
-		solveBoundaryCollisions();
+		solveCollisions();
+
+		for (ComposedObject& o : objects) {
+			o.solveCollisions();
+		}
+		//solveBoundaryCollisions();
 
 		/*for (Atom& a : atoms) {
 			a.point.update(dt);
 		}*/
 	}
 
-	const Vec2 boundaries_min = Vec2(50.0f, 50.0f);
-	const Vec2 boundaries_max = Vec2(1550.0f, 850.0f);
-	std::vector<Atom> atoms;
+	std::vector<ComposedObject> objects;
 };
 
