@@ -36,11 +36,7 @@ int main()
 
     solver.objects.emplace_back();
     const float atom_radius = 12.0f;
-    for (uint32_t x(0); x < 5; ++x) {
-        for (uint32_t y(0); y < 5; ++y) {
-            solver.objects.back().addAtom(Vec2(150.0f + x * 2.0f * atom_radius, 70.0f + y * 2.0f * atom_radius));
-        }
-    }
+    solver.objects.back().addAtom(Vec2(150.0f * atom_radius, 70.0f * 2.0f * atom_radius));
 
 	DisplayManager display_manager(window);
     display_manager.event_manager.addKeyPressedCallback(sf::Keyboard::C, [&](const sf::Event& ev) {

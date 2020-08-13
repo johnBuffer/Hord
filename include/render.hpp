@@ -45,7 +45,7 @@ struct Renderer
 			sf::CircleShape c(radius);
 			c.setOrigin(radius, radius);
 			c.setFillColor(sf::Color::Green);
-			c.setPosition(a.point.coords.x, a.point.coords.y);
+			c.setPosition(a.position.x, a.position.y);
 			target.draw(c, rs);
 		}
 	}

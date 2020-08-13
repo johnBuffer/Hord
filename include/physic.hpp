@@ -90,85 +90,35 @@ struct Vec2
 	float x, y;
 };
 
-
-struct VerletPoint
-{
-	VerletPoint()
-		: coords()
-		, last_coords()
-		, acceleration()
-	{}
-
-	VerletPoint(float x, float y)
-		: coords(x, y)
-		, last_coords(x, y)
-		, acceleration()
-	{}
-
-	void update(float dt)
-	{
-		const float new_x = coords.x + (coords.x - last_coords.x) * dt + acceleration.x * dt * dt;
-		const float new_y = coords.y + (coords.y - last_coords.y) * dt + acceleration.y * dt * dt;
-		last_coords = coords;
-		coords.x = new_x;
-		coords.y = new_y;
-		acceleration = {};
-	}
-
-	float getDistance2With(const VerletPoint& other) const
-	{
-		const float dx = coords.x - other.coords.x;
-		const float dy = coords.y - other.coords.y;
-		return dx*dx + dy*dy;
-	}
-
-	float getDistanceWith(const VerletPoint& other) const
-	{
-		return sqrt(getDistance2With(other));
-	}
-
-	void move(const Vec2& v)
-	{
-		coords += v;
-	}
-
-	void accelerate(const Vec2& a)
-	{
-		acceleration += a;
-	}
-
-	Vec2 coords, last_coords;
-	Vec2 acceleration;
-};
-
-
 struct Atom
 {
 	Atom()
-		: point()
-		, frame_move()
+		: position()
+		, delta_position()
+		, acceleration()
 		, mass(1.0f)
 	{}
 
 	Atom(const Vec2& p)
-		: point(p.x, p.y)
-		, frame_move()
+		: position(p.x, p.y)
+		, delta_position()
+		, acceleration()
 		, mass(1.0f)
 	{}
 
 	float getDistance2With(const Atom& other) const
 	{
-		return point.getDistance2With(other.point);
+		return (position - other.position).getLength();
 	}
 
 	void move(const Vec2& v)
 	{
-		frame_move += v;
+		delta_position += v;
 	}
 
 	void moveTo(const Vec2& p)
 	{
-		const Vec2 v = p - point.coords;
+		const Vec2 v = p - position;
 		move(v);
 	}
 
@@ -179,12 +129,13 @@ struct Atom
 
 	void reset()
 	{
-		frame_move = {};
-		point.acceleration = {};
+		delta_position = {};
+		acceleration = {};
 	}
 
-	VerletPoint point;
-	Vec2 frame_move;
+	Vec2 position;
+	Vec2 delta_position;
+	Vec2 acceleration;
 	float mass;
 	float radius = 12.0f;
 };
@@ -195,8 +146,9 @@ struct ComposedObject
 	ComposedObject()
 		: center_of_mass()
 		, speed()
-		, angular_speed(0.10f)
-		, angle(0.5f)
+		, angular_speed(0.0f)
+		, angle(0.0f)
+		, applied_force(0.0f, 0.0f)
 	{}
 
 	void addAtom(const Vec2& p)
@@ -208,97 +160,75 @@ struct ComposedObject
 	{
 		Vec2 com;
 		for (const Atom& a : atoms) {
-			com += a.point.coords;
+			com += a.position;
 		}
 		center_of_mass = com / float(atoms.size());
 	}
 
-	void solveBoundaryCollisions()
+	void applyForce(const Vec2& f)
 	{
-		for (Atom& a : atoms) {
-			Vec2 p = a.point.coords;
-			if (a.point.coords.x > boundaries_max.x - a.radius) {
-				p.x = boundaries_max.x - a.radius;
-			}
-			else if (a.point.coords.x < boundaries_min.x + a.radius) {
-				p.x = boundaries_min.x + a.radius;
-			}
+		applied_force += f;
+	}
 
-			if (a.point.coords.y > boundaries_max.y - a.radius) {
-				p.y = boundaries_max.y - a.radius;
-			}
-			else if (a.point.coords.y < boundaries_min.y + a.radius) {
-				p.y = boundaries_min.y + a.radius;
-			}
-			a.moveTo(p);
-		}
+	void accelerate(const Vec2& a)
+	{
+		applyForce(a * getMass());
+	}
+
+	float getMass() const
+	{
+		return float(atoms.size());
 	}
 
 	void update(float dt)
 	{
-		speed += Vec2(0.0f, 400.0f) * dt;
-		translate(speed * dt);
-		computeCenterOfMass();
+		// Stuff
+		const float mass = 1.0f / getMass();
+		speed += (applied_force / mass) * dt;
+		// Reset
+		applied_force = Vec2(0.0f, 0.0f);
+	}
 
-		angle += angular_speed * dt;
+	void updateState(float dt)
+	{
+		translate(speed * dt);
+		center_of_mass += speed * dt;
+
 		rotate(angular_speed * dt);
+		angle += angular_speed * dt;
 	}
 
 	void solveCollisions()
 	{
-		solveBoundaryCollisions();
-		Vec2 delta_p(0.0f, 0.0f);
-		float delta_r = 0.0f;
-		for (Atom& a : atoms) {
-			delta_p += a.frame_move;
-			delta_r += getRotationDelta(a);
-			a.reset();
-		}
-		translate(delta_p);
-		rotate(delta_r);
-		angular_speed += delta_r;
-		speed += delta_p;
-	}
-
-	float getRotationDelta(const Atom& a) const
-	{
-		const Vec2 to_com = center_of_mass - a.point.coords;
-		// Could be pre computed
-		const float length = to_com.getLength();
-		if (length > 0.001f) {
-			const Vec2 to_com_v = to_com / length;
-			const Vec2 to_com_normal = to_com_v.getNormal();
-			const float strength = to_com_normal.dot(a.point.coords.getNormalized()) / length;
-
-			return strength * a.frame_move.getLength();
-		}
-
-		return 0.0f;
+		
 	}
 
 	void translate(const Vec2& v)
 	{
 		for (Atom& a : atoms) {
-			a.point.coords += v;
+			a.position += v;
 		}
 	}
 
 	void rotate(float r)
 	{
 		for (Atom& a : atoms) {
-			a.point.coords.rotate(center_of_mass, r);
+			a.position.rotate(center_of_mass, r);
 		}
+	}
+
+	float getDistanceToCenterOfMass(const Vec2& p) const
+	{
+		return (center_of_mass - p).getLength();
 	}
 
 	std::vector<Atom> atoms;
 	Vec2 center_of_mass;
 	Vec2 speed;
+	Vec2 applied_force;
 
 	float angular_speed;
 	float angle;
-
-	const Vec2 boundaries_min = Vec2(50.0f, 50.0f);
-	const Vec2 boundaries_max = Vec2(1550.0f, 850.0f);
 };
 
 
@@ -306,53 +236,65 @@ struct Solver
 {
 	void solveCollisions()
 	{
-		const uint64_t objects_count = objects.size();
-		for (uint64_t i(0); i<objects_count; ++i) {
-			for (Atom& a : objects[i].atoms) {
-				for (uint64_t k(i + 1); k < objects_count; ++k) {
-					solveCollisionWithOther(a, objects[k]);
+		
+	}
+
+	void solveBoundaryCollisions()
+	{
+		for (ComposedObject& o : objects) {
+			for (Atom& a : o.atoms) {
+				Vec2 p = a.position;
+				Vec2 contact_point;
+				Vec2 normal;
+				
+				if (a.position.x > boundaries_max.x - a.radius) {
+					p.x = boundaries_max.x - a.radius;
 				}
+				else if (a.position.x < boundaries_min.x + a.radius) {
+					p.x = boundaries_min.x + a.radius;
+				}
+
+				if (a.position.y > boundaries_max.y - a.radius) {
+					p.y = boundaries_max.y - a.radius;
+				}
+				else if (a.position.y < boundaries_min.y + a.radius) {
+					p.y = boundaries_min.y + a.radius;
+				}
+				a.moveTo(p);
 			}
 		}
 	}
 
-	void solveCollisionWithOther(Atom& a1, ComposedObject& other)
+	void applyGravity()
 	{
-		for (Atom& a2 : other.atoms) {
-			const Vec2 v = a1.point.coords - a2.point.coords;
-			const float dist2 = v.getLength2();
-			const float min_dist = 2.0f * a1.radius;
-
-			if (dist2 < min_dist * min_dist) {
-				const float dist = sqrt(dist2);
-				const float delta_dist = min_dist - dist;
-				const Vec2 axis = v / dist;
-
-				const Vec2 positions_correction(delta_dist * axis.x, delta_dist * axis.y);
-				a1.move(positions_correction);
-				a2.move(-positions_correction);
-			}
+		const Vec2 gravity(0.0f, 10.0f);
+		for (ComposedObject& o : objects) {
+			o.accelerate(gravity);
 		}
 	}
 
 	void update(float dt)
 	{
+		applyGravity();
+
 		for (ComposedObject& o : objects) {
 			o.update(dt);
 		}
 
-		solveCollisions();
+		solveBoundaryCollisions();
+
+		for (ComposedObject& o : objects) {
+			o.updateState(dt);
+		}
+
+		/*solveCollisions();
 
 		for (ComposedObject& o : objects) {
 			o.solveCollisions();
-		}
-		//solveBoundaryCollisions();
-
-		/*for (Atom& a : atoms) {
-			a.point.update(dt);
 		}*/
 	}
 
 	std::vector<ComposedObject> objects;
+	const Vec2 boundaries_min = Vec2(50.0f, 50.0f);
+	const Vec2 boundaries_max = Vec2(1550.0f, 850.0f);
 };
-
