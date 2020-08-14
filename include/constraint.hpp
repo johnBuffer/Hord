@@ -6,7 +6,7 @@ struct Constraint
 {
 	virtual bool needCorrection(const Atom& atom) const {};
 	virtual const Vec2 getContactPoint(const Atom& atom) const {}
-	virtual float getDelta() const {}
+	virtual float getDelta(const Atom& atom) const {}
 };
 
 
@@ -20,12 +20,15 @@ struct BoundaryConstraint : public Constraint
 
 	const Vec2 getContactPoint(const Atom& atom) const override
 	{
-
+		if (Horizontal) {
+			return Vec2(coord, atom.position.y);
+		}
+		return Vec2(atom.position.x, coord);
 	}
 
-	float getDelta() const override
+	float getDelta(const Atom& atom) const override
 	{
-
+		return 0.0f;
 	}
 
 	enum Type {
