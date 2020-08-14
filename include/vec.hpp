@@ -1,59 +1,90 @@
-//#pragma once
-//#include <cstdarg>
-//
-//template<typename T, unsigned int N>
-//struct Vec
-//{
-//	Vec(T args...)
-//		: coords{args}
-//	{}
-//
-//	T coords[N];
-//};
-//
-//
-////template<typename T, unsigned int N>
-////using Vec = T[N];
-////
-////using Vec2f = Vec<float, 2>;
-//
-//template<typename T>
-//struct Vec2 : public Vec<T, 2>
-//{
-//	Vec2()
-//		: Vec<T, 2>(0, 0)
-//		, x(coords[0])
-//		, y(coords[1])
-//	{}
-//
-//	Vec2(T x_, T y_)
-//		: Vec<T, 2>(x_, y_)
-//		, x(coords[0])
-//		, y(coords[1])
-//	{}
-//
-//	T& x;
-//	T& y;
-//};
-//
-//
-//using Vec2f = Vec2<float>;
-//using Vec2i = Vec2<int32_t>;
-//
-//template<typename T>
-//Vec2<T> vabs(const Vec2<T>& v)
-//{
-//	return Vec2<T>(std::abs(v.coords[0]), std::abs(v.coords[1]));
-//}
-//
-//template<typename T>
-//static T sign(T x)
-//{
-//	return (x >= as<int, T>(0)) + as<int, T>(-1) * (x < as<int, T>(0));
-//}
-//
-//template<typename T>
-//Vec2i vsign(const Vec2<T>& v)
-//{
-//	return Vec2i(sign(v.coords[0]), sign(v.coords[1]));
-//}
+#pragma once
+
+
+struct Vec2
+{
+	Vec2()
+		: x(0.0f)
+		, y(0.0f)
+	{}
+
+	Vec2(float x_, float y_)
+		: x(x_)
+		, y(y_)
+	{}
+
+	float getLength2() const
+	{
+		return x * x + y * y;
+	}
+
+	float getLength() const
+	{
+		return sqrt(getLength2());
+	}
+
+	Vec2 operator/(float f) const
+	{
+		const float inv = 1.0f / f;
+		return Vec2(x * inv, y * inv);
+	}
+
+	Vec2 operator*(float f) const
+	{
+		return Vec2(x * f, y * f);
+	}
+
+	Vec2 operator-(const Vec2& other) const
+	{
+		return Vec2(x - other.x, y - other.y);
+	}
+
+	Vec2 operator-() const
+	{
+		return Vec2(-x, -y);
+	}
+
+	void operator+=(const Vec2& other)
+	{
+		x += other.x;
+		y += other.y;
+	}
+
+	void operator-=(const Vec2& other)
+	{
+		x -= other.x;
+		y -= other.y;
+	}
+
+	void rotate(const Vec2& origin, float angle)
+	{
+		const Vec2 v = *this - origin;
+
+		// This should be precomputed
+		const float ca = cos(angle);
+		const float sa = sin(angle);
+
+		const float new_x = v.x * ca - v.y * sa;
+		const float new_y = v.x * sa + v.y * ca;
+
+		x = new_x + origin.x;
+		y = new_y + origin.y;
+	}
+
+	Vec2 getNormal() const
+	{
+		return Vec2(-y, x);
+	}
+
+	float dot(const Vec2& other) const
+	{
+		return x * other.x + y * other.y;
+	}
+
+	Vec2 getNormalized() const
+	{
+		return (*this) / getLength();
+	}
+
+	float x, y;
+};
