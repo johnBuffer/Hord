@@ -26,17 +26,10 @@ int main()
     sf::Vector2f start(0.0f, 0.0f);
     sf::Vector2f end(10.0f, 10.0f);
 
-    const uint32_t agents_count = 10;
-    std::vector<Agent> agents;
-    for (uint32_t i(agents_count); i--;) {
-        agents.emplace_back(rand()%WinWidth, rand() % WinHeight);
-    }
-
     Solver solver;
+    solver.addBoundary(WinHeight, -1.0f, BoundaryConstraint::Type::Vertical);
 
-    solver.objects.emplace_back();
     const float atom_radius = 12.0f;
-    solver.objects.back().addAtom(Vec2(150.0f * atom_radius, 70.0f * 2.0f * atom_radius));
 
 	DisplayManager display_manager(window);
     display_manager.event_manager.addKeyPressedCallback(sf::Keyboard::C, [&](const sf::Event& ev) {
@@ -52,6 +45,7 @@ int main()
 
     display_manager.event_manager.addKeyPressedCallback(sf::Keyboard::E, [&](const sf::Event& ev) {
         solver.objects.emplace_back();
+        solver.objects.back().angular_velocity = 1.0f;
         for (uint32_t x(0); x < 5; ++x) {
             for (uint32_t y(0); y < 5; ++y) {
                 solver.objects.back().addAtom(Vec2(157.0f + x * 2.0f * atom_radius, 170.0f + y * 2.0f * atom_radius));

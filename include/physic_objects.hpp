@@ -3,6 +3,9 @@
 #include "vec.hpp"
 
 
+struct ComposedObject;
+
+
 struct Atom
 {
 	Atom()
@@ -10,6 +13,7 @@ struct Atom
 		, delta_position()
 		, acceleration()
 		, mass(1.0f)
+		, parent(nullptr)
 	{}
 
 	Atom(const Vec2& p)
@@ -17,6 +21,7 @@ struct Atom
 		, delta_position()
 		, acceleration()
 		, mass(1.0f)
+		, parent(nullptr)
 	{}
 
 	float getDistance2With(const Atom& other) const
@@ -46,6 +51,7 @@ struct Atom
 		acceleration = {};
 	}
 
+	ComposedObject* parent;
 	Vec2 position;
 	Vec2 delta_position;
 	Vec2 acceleration;
@@ -58,15 +64,27 @@ struct ComposedObject
 {
 	ComposedObject()
 		: center_of_mass()
-		, speed()
-		, angular_speed(0.0f)
+		, velocity()
+		, angular_velocity(0.0f)
 		, angle(0.0f)
 		, applied_force(0.0f, 0.0f)
+		, intertia(0.0f)
+		, mass(0.0f)
 	{}
 
 	void addAtom(const Vec2& p)
 	{
 		atoms.emplace_back(p);
+		atoms.back().parent = this;
+
+		if (!mass) {
+			intertia = 1.0f;
+		}
+		else {
+			addToInertia(p);
+		}
+		mass += 1.0f;
+		computeCenterOfMass();
 	}
 
 	void computeCenterOfMass()
@@ -75,7 +93,13 @@ struct ComposedObject
 		for (const Atom& a : atoms) {
 			com += a.position;
 		}
-		center_of_mass = com / float(atoms.size());
+		center_of_mass = com / mass;
+	}
+
+	void addToInertia(const Vec2& p)
+	{
+		const Vec2 r = center_of_mass - p;
+		intertia += r.getLength2();
 	}
 
 	void applyForce(const Vec2& f)
@@ -88,32 +112,42 @@ struct ComposedObject
 		applyForce(a * getMass());
 	}
 
+	void applyImpulse(const Vec2& linear, float angular)
+	{
+		velocity += linear;
+		angular_velocity += angular;
+		std::cout << "Linear: (" << linear.x << ", " << linear.y << ") angular: " << angular << std::endl;
+	}
+
 	float getMass() const
 	{
-		return float(atoms.size());
+		return mass;
 	}
 
 	void update(float dt)
 	{
 		// Stuff
-		const float mass = 1.0f / getMass();
-		speed += (applied_force / mass) * dt;
+		velocity += (applied_force / mass) * dt;
 		// Reset
 		applied_force = Vec2(0.0f, 0.0f);
 	}
 
 	void updateState(float dt)
 	{
-		translate(speed * dt);
-		center_of_mass += speed * dt;
-
-		rotate(angular_speed * dt);
-		angle += angular_speed * dt;
+		translate(velocity * dt);
+		center_of_mass += velocity * dt;
+		rotate(angular_velocity * dt);
+		angle += angular_velocity * dt;
 	}
 
 	void solveCollisions()
 	{
 
+	}
+
+	float getMomentInertia() const
+	{
+		return intertia;
 	}
 
 	void translate(const Vec2& v)
@@ -137,9 +171,12 @@ struct ComposedObject
 
 	std::vector<Atom> atoms;
 	Vec2 center_of_mass;
-	Vec2 speed;
+	Vec2 velocity;
 	Vec2 applied_force;
 
-	float angular_speed;
+	float angular_velocity;
 	float angle;
+
+	float mass;
+	float intertia;
 };

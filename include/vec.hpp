@@ -50,6 +50,11 @@ struct Vec2
 		y += other.y;
 	}
 
+	Vec2 plus(const Vec2& other) const
+	{
+		return Vec2(x + other.x, y + other.y);
+	}
+
 	void operator-=(const Vec2& other)
 	{
 		x -= other.x;
@@ -79,6 +84,11 @@ struct Vec2
 	float dot(const Vec2& other) const
 	{
 		return x * other.x + y * other.y;
+	}
+
+	float cross(const Vec2& other) const
+	{
+		return x * other.y - y * other.x;
 	}
 
 	Vec2 getNormalized() const
