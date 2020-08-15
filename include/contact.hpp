@@ -49,7 +49,7 @@ struct HorizontalBoundaryContact
 		const Vec2& contact_normal = boundary->normal;
 		j_linear_velocity = contact_normal;
 		// Not sure about the sign
-		const Vec2 to_contact_point = getContactPoint() - atom->parent->center_of_mass;
+		const Vec2 to_contact_point = atom->position.plus(Vec2(0.0f, atom->radius)) - atom->parent->center_of_mass;
 		j_angular_velocity = to_contact_point.cross(contact_normal);
 		const float c = Vec2(0.0f, getDelta()).dot(contact_normal);
 		accumulated_lambda = 0.0f;
@@ -82,7 +82,7 @@ struct HorizontalBoundaryContact
 };
 
 
-struct AtomContact
+/*struct AtomContact
 {
 	Atom* atom_a;
 	Atom* atom_b;
@@ -174,4 +174,4 @@ struct AtomContact
 		atom->parent->velocity = linear_impulse;
 		atom->parent->angular_velocity = angular_impulse;
 	}
-};
+};*/

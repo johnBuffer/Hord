@@ -33,7 +33,7 @@ struct Solver
 			}
 		}
 
-		const uint32_t iterations_count = 4;
+		const uint32_t iterations_count = 2;
 		for (uint32_t i(iterations_count); i--;) {
 			for (HorizontalBoundaryContact& c : contacts) {
 				c.computeImpulse();
