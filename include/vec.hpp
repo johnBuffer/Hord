@@ -91,6 +91,11 @@ struct Vec2
 		return x * other.y - y * other.x;
 	}
 
+	float cross(const Vec2& other) const
+	{
+		return x * other.y - y * other.x;
+	}
+
 	Vec2 getNormalized() const
 	{
 		return (*this) / getLength();

@@ -29,6 +29,8 @@ int main()
     Solver solver;
     solver.addBoundary(WinHeight, -1.0f, BoundaryConstraint::Type::Vertical);
 
+    bool pause = false;
+    bool step = false;
     const float atom_radius = 12.0f;
 
 	DisplayManager display_manager(window);
@@ -45,12 +47,20 @@ int main()
 
     display_manager.event_manager.addKeyPressedCallback(sf::Keyboard::E, [&](const sf::Event& ev) {
         solver.objects.emplace_back();
-        solver.objects.back().angular_velocity = 1.0f;
+        //solver.objects.back().angular_velocity = 1.0f;
         for (uint32_t x(0); x < 5; ++x) {
             for (uint32_t y(0); y < 5; ++y) {
-                solver.objects.back().addAtom(Vec2(157.0f + x * 2.0f * atom_radius, 170.0f + y * 2.0f * atom_radius));
+                solver.objects.back().addAtom(Vec2(157.0f + x * 2.0f * atom_radius, 370.0f + y * 2.0f * atom_radius));
             }
         }
+    });
+
+    display_manager.event_manager.addKeyPressedCallback(sf::Keyboard::Space, [&](const sf::Event& ev) {
+        step = true;
+    });
+
+    display_manager.event_manager.addKeyPressedCallback(sf::Keyboard::P, [&](const sf::Event& ev) {
+        pause = !pause;
     });
 
     const float dt = 0.016f;
@@ -59,7 +69,10 @@ int main()
         display_manager.processEvents();
         const sf::Vector2i mouse_pos = sf::Mouse::getPosition(window);
 
-        solver.update(dt);
+        if (step || !pause) {
+            solver.update(dt);
+            step = false;
+        }
 
         window.clear(sf::Color::Black);
 

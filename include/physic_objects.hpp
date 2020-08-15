@@ -10,15 +10,15 @@ struct Atom
 {
 	Atom()
 		: position()
-		, delta_position()
+		, last_position()
 		, acceleration()
 		, mass(1.0f)
 		, parent(nullptr)
 	{}
 
 	Atom(const Vec2& p)
-		: position(p.x, p.y)
-		, delta_position()
+		: position(p)
+		, last_position(p)
 		, acceleration()
 		, mass(1.0f)
 		, parent(nullptr)
@@ -29,31 +29,18 @@ struct Atom
 		return (position - other.position).getLength();
 	}
 
-	void move(const Vec2& v)
-	{
-		delta_position += v;
-	}
-
-	void moveTo(const Vec2& p)
-	{
-		const Vec2 v = p - position;
-		move(v);
-	}
-
-	void update(float dt)
-	{
-
-	}
-
 	void reset()
 	{
-		delta_position = {};
 		acceleration = {};
 	}
 
+	Vec2 getVelocity() const
+	{
+		return position - last_position;
+	}
+
 	ComposedObject* parent;
-	Vec2 position;
-	Vec2 delta_position;
+	Vec2 position, last_position;
 	Vec2 acceleration;
 	float mass;
 	float radius = 12.0f;
@@ -116,7 +103,15 @@ struct ComposedObject
 	{
 		velocity += linear;
 		angular_velocity += angular;
-		std::cout << "Linear: (" << linear.x << ", " << linear.y << ") angular: " << angular << std::endl;
+		//std::cout << "Linear: (" << linear.x << ", " << linear.y << ") angular: " << angular << std::endl;
+	}
+
+	void applyImpulseAt(const Vec2& linear, const Vec2& position)
+	{
+		//std::cout << "Linear: (" << linear.x << ", " << linear.y << ") angular: " << angular << std::endl;
+		velocity += linear;
+		const Vec2 to_point = position - center_of_mass;
+		angular_velocity += linear.getLength() * to_point.cross(linear.getNormalized()) * 0.016f * 0.016f;
 	}
 
 	float getMass() const
@@ -134,6 +129,7 @@ struct ComposedObject
 
 	void updateState(float dt)
 	{
+		std::cout << "Vel: " << velocity.x << " " << velocity.y << " angular: " << angular_velocity * dt << std::endl;
 		translate(velocity * dt);
 		center_of_mass += velocity * dt;
 		rotate(angular_velocity * dt);

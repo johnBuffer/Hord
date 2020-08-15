@@ -22,16 +22,16 @@ struct Solver
 			for (Atom& a : o.atoms) {
 				for (const BoundaryConstraint& b : boundaries) {
 					if (b.needCorrection(a)) {
-						applyImpulse(o, b.getImpulse(a), dt);
+						applyImpulse(o, b.getImpulse(a), a.position, dt);
 					}
 				}
 			}
 		}
 	}
 
-	void applyImpulse(ComposedObject& o, const Impulse& i, float dt)
+	void applyImpulse(ComposedObject& o, const Impulse& i, const Vec2& at, float dt)
 	{
-		o.applyImpulse(i.linear * dt, dt*i.angular);
+		o.applyImpulseAt(i.linear * dt, at);
 	}
 
 	void applyGravity()
@@ -50,7 +50,7 @@ struct Solver
 			o.update(dt);
 		}
 
-		const uint32_t iterations_count = 1;
+		const uint32_t iterations_count = 8;
 		for (uint32_t i(iterations_count); i--;) {
 			solveBoundaryCollisions(dt);
 		}

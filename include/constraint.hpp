@@ -70,6 +70,7 @@ struct BoundaryConstraint : public Constraint
 
 	Impulse getImpulse(const Atom& atom) const override
 	{
+		const float dt = 0.016f;
 		const Vec2 normal = (type == Type::Horizontal) ? Vec2(direction, 0.0f) : Vec2(0.0f, direction);
 		
 		const float inv_mass = 1.0f / atom.parent->getMass();
@@ -79,12 +80,13 @@ struct BoundaryConstraint : public Constraint
 		//const float cross2 = to_contact_point.getNormalized().cross(normal);
 
 		const float m_eff = 1.0f / (inv_mass + inv_iner * cross * cross);
-		const float c1_d = atom.parent->velocity.plus(to_contact_point * atom.parent->angular_velocity).dot(normal);
+		const float c1_d = (atom.parent->velocity).plus(to_contact_point * (atom.parent->angular_velocity)).dot(normal);
+		//const float c1_d = atom.getVelocity().dot(normal);
 		const float lambda = c1_d * -m_eff;
 
 		//const float cross2 = to_contact_point.getNormalized().cross(normal);
 
-		Impulse result(normal * lambda, cross * lambda);
+		Impulse result(normal * lambda, 0.0f * cross * lambda);
 
 		return result;
 	}
