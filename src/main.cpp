@@ -27,7 +27,7 @@ int main()
     sf::Vector2f end(10.0f, 10.0f);
 
     Solver solver;
-    solver.addBoundary(WinHeight, -1.0f, BoundaryConstraint::Type::Vertical);
+    solver.addBoundary(Vec2(0.0f, -1.0f), WinHeight);
 
     bool pause = false;
     bool step = false;
@@ -47,7 +47,7 @@ int main()
 
     display_manager.event_manager.addKeyPressedCallback(sf::Keyboard::E, [&](const sf::Event& ev) {
         solver.objects.emplace_back();
-        //solver.objects.back().angular_velocity = 1.0f;
+        solver.objects.back().angular_velocity = 10.0f;
         for (uint32_t x(0); x < 5; ++x) {
             for (uint32_t y(0); y < 5; ++y) {
                 solver.objects.back().addAtom(Vec2(157.0f + x * 2.0f * atom_radius, 370.0f + y * 2.0f * atom_radius));

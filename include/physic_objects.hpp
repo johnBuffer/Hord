@@ -6,6 +6,20 @@
 struct ComposedObject;
 
 
+struct HorizontalBoundary
+{
+	HorizontalBoundary() = default;
+
+	HorizontalBoundary(const Vec2& n, float c)
+		: normal(n)
+		, coord(c)
+	{}
+
+	Vec2 normal;
+	float coord;
+};
+
+
 struct Atom
 {
 	Atom()
@@ -138,7 +152,7 @@ struct ComposedObject
 
 	void solveCollisions()
 	{
-
+		
 	}
 
 	float getMomentInertia() const
