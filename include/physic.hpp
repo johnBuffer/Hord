@@ -34,7 +34,7 @@ struct Solver
 
 	void applyGravity()
 	{
-		const Vec2 gravity(0.0f, 200.0f);
+		const Vec2 gravity(0.0f, 400.0f);
 		for (ComposedObject& o : objects) {
 			o.accelerate(gravity);
 		}

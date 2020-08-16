@@ -6,52 +6,6 @@
 
 struct Utils
 {
-	static float dot(const std::vector<float>& v1, const std::vector<float>& v2)
-	{
-		float result = 0.0f;
-
-		const uint64_t size = v1.size();
-		for (uint64_t i(0); i < size; ++i) {
-			result += v1[i] * v2[i];
-		}
-
-		return result;
-	}
-
-	static std::vector<float> plus(const std::vector<float>& v1, const std::vector<float>& v2)
-	{
-		const uint64_t size = v1.size();
-		std::vector<float> result(size);
-		for (uint64_t i(0); i < size; ++i) {
-			result[i] = v1[i] + v2[i];
-		}
-
-		return result;
-	}
-
-	static std::vector<float> mult(const std::vector<float>& v1, const std::vector<float>& v2)
-	{
-		const uint64_t size = v1.size();
-		std::vector<float> result(size);
-		for (uint64_t i(0); i < size; ++i) {
-			result[i] = v1[i] * v2[i];
-		}
-
-		return result;
-	}
-
-	static std::vector<float> mult(float f, const std::vector<float>& v)
-	{
-		const uint64_t size = v.size();
-		std::vector<float> result(size);
-		for (uint64_t i(0); i < size; ++i) {
-			result[i] = f * v[i];
-		}
-
-		return result;
-	}
-
-	// ARRAY Versions
 	template<typename T, uint32_t N>
 	static float dot(const Array<T, N>& v1, const Array<T, N>& v2)
 	{
@@ -195,6 +149,14 @@ struct AtomContact
 		accumulated_lambda = 0.0f;
 	}
 
+	void applyImpulse(const Array<float, 6>& v)
+	{
+		atom_a->parent->velocity = Vec2(v[0], v[1]);
+		atom_a->parent->angular_velocity = v[2];
+		atom_b->parent->velocity = Vec2(v[3], v[4]);
+		atom_b->parent->angular_velocity = v[5];
+	}
+
 	void computeImpulse()
 	{
 		const Vec2 body_1_velocity = atom_a->parent->getVelocity();
@@ -216,10 +178,7 @@ struct AtomContact
 		accumulated_lambda += lambda;
 		impulse = contact_normal * accumulated_lambda;
 		Utils::add(v, Utils::mult(inv_m, Utils::mult(lambda, j)));
-		atom_a->parent->velocity         = Vec2(v[0], v[1]);
-		atom_a->parent->angular_velocity = v[2];
-		atom_b->parent->velocity         = Vec2(v[3], v[4]);
-		atom_b->parent->angular_velocity = v[5];
+		applyImpulse(v);
 
 		// Friction
 		float lambda_friction = -Utils::dot(j_friction, v) / Utils::dot(j_friction, Utils::mult(inv_m, j_friction));
@@ -231,9 +190,6 @@ struct AtomContact
 		}
 
 		Utils::add(v, Utils::mult(inv_m, Utils::mult(lambda_friction, j_friction)));
-		atom_a->parent->velocity         = Vec2(v[0], v[1]);
-		atom_a->parent->angular_velocity = v[2];
-		atom_b->parent->velocity         = Vec2(v[3], v[4]);
-		atom_b->parent->angular_velocity = v[5];
+		applyImpulse(v);
 	}
 };
