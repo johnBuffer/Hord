@@ -1,6 +1,7 @@
 #pragma once
 
 #include "physic_objects.hpp"
+#include "array.hpp"
 
 
 struct Utils
@@ -49,6 +50,59 @@ struct Utils
 
 		return result;
 	}
+
+	// ARRAY Versions
+	template<typename T, uint32_t N>
+	static float dot(const Array<T, N>& v1, const Array<T, N>& v2)
+	{
+		float result = 0.0f;
+		for (uint64_t i(0); i < N; ++i) {
+			result += v1[i] * v2[i];
+		}
+
+		return result;
+	}
+	
+	template<typename T, uint32_t N>
+	static Array<T, N> plus(const Array<T, N>& v1, const Array<T, N>& v2)
+	{
+		Array<T, N> result;
+		for (uint64_t i(0); i < N; ++i) {
+			result[i] = v1[i] + v2[i];
+		}
+
+		return result;
+	}
+
+	template<typename T, uint32_t N>
+	static void add(Array<T, N>& v1, const Array<T, N>& v2)
+	{
+		for (uint64_t i(0); i < N; ++i) {
+			v1[i] += v2[i];
+		}
+	}
+
+	template<typename T, uint32_t N>
+	static Array<T, N> mult(const Array<T, N>& v1, const Array<T, N>& v2)
+	{
+		Array<T, N> result;
+		for (uint64_t i(0); i < N; ++i) {
+			result[i] = v1[i] * v2[i];
+		}
+
+		return result;
+	}
+
+	template<typename T, uint32_t N>
+	static Array<T, N> mult(float f, const Array<T, N>& v)
+	{
+		Array<T, N> result;
+		for (uint64_t i(0); i < N; ++i) {
+			result[i] = f * v[i];
+		}
+
+		return result;
+	}
 };
 
 struct AtomContact
@@ -58,12 +112,12 @@ struct AtomContact
 
 	float accumulated_lambda;
 	float bias;
+	float delta;
+	const float friction = 0.25f;
 
-	const float friction = 0.05f;
-
-	std::vector<float> j;
-	std::vector<float> j_friction;
-	std::vector<float> inv_m;
+	Array<float, 6> j;
+	Array<float, 6> j_friction;
+	Array<float, 6> inv_m;
 
 	Vec2 impulse;
 	Vec2 contact_point;
@@ -79,9 +133,6 @@ struct AtomContact
 		: atom_a(a)
 		, atom_b(b)
 		, accumulated_lambda(0.0f)
-		, j(6)
-		, j_friction(6)
-		, inv_m(6)
 	{}
 
 	float getDelta() const
@@ -89,9 +140,10 @@ struct AtomContact
 		return (atom_a->position - atom_b->position).getLength() - 2 * atom_a->radius;
 	}
 
-	bool isValid() const
+	bool isValid()
 	{
-		return getDelta() < 0.0f;
+		delta = getDelta();
+		return delta < 0.0f;
 	}
 
 	Vec2 getContactPointA(const Vec2& collision_vec) const
@@ -129,17 +181,15 @@ struct AtomContact
 		j_friction[5] = -to_contact_point_b.cross(contact_tangent);
 		// Intertia
 		const float inv_mass_a = 1.0f / atom_a->parent->getMass();
-		const float inv_moment_intertia_a = 1.0f / atom_a->parent->getMomentInertia();
 		const float inv_mass_b = 1.0f / atom_b->parent->getMass();
-		const float inv_moment_intertia_b = 1.0f / atom_b->parent->getMomentInertia();
 		inv_m[0] = inv_mass_a;
 		inv_m[1] = inv_mass_a;
-		inv_m[2] = inv_moment_intertia_a;
+		inv_m[2] = 1.0f / atom_a->parent->getMomentInertia();
 		inv_m[3] = inv_mass_b;
 		inv_m[4] = inv_mass_b;
-		inv_m[5] = inv_moment_intertia_b;
+		inv_m[5] = 1.0f / atom_b->parent->getMomentInertia();
 
-		const float c = Vec2(0.0f, getDelta()).dot(contact_normal);
+		const float c = Vec2(0.0f, delta).dot(contact_normal);
 		bias = 0.2f / 0.016f * ((c < 0.0f) ? c : 0.0f);
 
 		accumulated_lambda = 0.0f;
@@ -149,7 +199,7 @@ struct AtomContact
 	{
 		const Vec2 body_1_velocity = atom_a->parent->getVelocity();
 		const Vec2 body_2_velocity = atom_b->parent->getVelocity();
-		std::vector<float> v = {
+		Array<float, 6> v = {
 			body_1_velocity.x,
 			body_1_velocity.y,
 			atom_a->parent->getAngularVelocity(),
@@ -159,34 +209,31 @@ struct AtomContact
 		};
 
 		// Normal
-		// var lambda = -(MV.dot(J[j], v) + bias[j]) / MV.dot(J[j], MV.VxV(MInv[j], J[j]));
 		float lambda = -(Utils::dot(j, v) + bias) / Utils::dot(j, Utils::mult(inv_m, j));
 		if (accumulated_lambda + lambda < 0) {
 			lambda = -accumulated_lambda;
 		}
 		accumulated_lambda += lambda;
 		impulse = contact_normal * accumulated_lambda;
-		// v = MV.VpV(v, MV.VxV(MInv[j], MV.SxV(lambda, Jn[j])));
-		v = Utils::plus(v, Utils::mult(inv_m, Utils::mult(lambda, j)));
+		Utils::add(v, Utils::mult(inv_m, Utils::mult(lambda, j)));
 		atom_a->parent->velocity         = Vec2(v[0], v[1]);
 		atom_a->parent->angular_velocity = v[2];
 		atom_b->parent->velocity         = Vec2(v[3], v[4]);
 		atom_b->parent->angular_velocity = v[5];
 
 		// Friction
-		// var lambdaFriction = -(MV.dot(Jt[j], v) + 0 * bias[j]) / MV.dot(Jt[j], MV.VxV(MInv[j], Jt[j]));
-		/*float lambda_friction = -Utils::dot(j_friction, v) / Utils::dot(j_friction, Utils::mult(inv_m, j_friction));
+		float lambda_friction = -Utils::dot(j_friction, v) / Utils::dot(j_friction, Utils::mult(inv_m, j_friction));
 		if (lambda_friction > friction * lambda) {
 			lambda_friction = friction * lambda;
 		}
 		else if (lambda_friction < -friction * lambda) {
 			lambda_friction = -friction * lambda;
 		}
-		//v = MV.VpV(v, MV.VxV(MInv[j], MV.SxV(lambdaFriction, Jt[j])));
-		v = Utils::plus(v, Utils::mult(inv_m, Utils::mult(lambda_friction, j_friction)));
+
+		Utils::add(v, Utils::mult(inv_m, Utils::mult(lambda_friction, j_friction)));
 		atom_a->parent->velocity         = Vec2(v[0], v[1]);
 		atom_a->parent->angular_velocity = v[2];
 		atom_b->parent->velocity         = Vec2(v[3], v[4]);
-		atom_b->parent->angular_velocity = v[5];*/
+		atom_b->parent->angular_velocity = v[5];
 	}
 };

@@ -30,7 +30,7 @@ int main()
 
     bool pause = false;
     bool step = false;
-    const float atom_radius = 12.0f;
+    const float atom_radius = 8.0f;
 
     solver.objects.emplace_back();
     solver.objects.back().moving = false;

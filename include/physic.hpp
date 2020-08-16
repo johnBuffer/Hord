@@ -49,7 +49,7 @@ struct Solver
 		}
 
 		findContacts();
-		const uint32_t iterations_count = 4;
+		const uint32_t iterations_count = 16;
 		for (uint32_t i(iterations_count); i--;) {
 			for (AtomContact& c : atom_contacts) {
 				c.computeImpulse();

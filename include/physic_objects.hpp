@@ -57,7 +57,7 @@ struct Atom
 	Vec2 position, last_position;
 	Vec2 acceleration;
 	float mass;
-	float radius = 12.0f;
+	float radius = 8.0f;
 };
 
 
@@ -100,7 +100,7 @@ struct ComposedObject
 
 	void addToInertia(const Vec2& p)
 	{
-		const float atom_mass = 0.5f;
+		const float atom_mass = 0.1f;
 		const Vec2 r = center_of_mass - p;
 		intertia += atom_mass * r.getLength2();
 	}
