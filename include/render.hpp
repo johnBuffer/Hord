@@ -14,10 +14,10 @@ struct Renderer
 		for (int32_t x(0); x < grid_info.width; ++x) {
 			for (int32_t y(0); y < grid_info.height; ++y) {
 				const uint64_t index = x + y * grid_info.width;
-				va[4 * index + 0].position = sf::Vector2f(x * cs, y * cs);
-				va[4 * index + 1].position = sf::Vector2f((x+1) * cs, y * cs);
-				va[4 * index + 2].position = sf::Vector2f((x+1) * cs, (y+1) * cs);
-				va[4 * index + 3].position = sf::Vector2f(x * cs, (y+1) * cs);
+				va[4 * index + 0].position = sf::Vector2f(Tools::as<float>(x * cs), Tools::as<float>(y * cs));
+				va[4 * index + 1].position = sf::Vector2f(Tools::as<float>((x+1) * cs), Tools::as<float>(y * cs));
+				va[4 * index + 2].position = sf::Vector2f(Tools::as<float>((x+1) * cs), Tools::as<float>((y+1) * cs));
+				va[4 * index + 3].position = sf::Vector2f(Tools::as<float>(x * cs), Tools::as<float>((y+1) * cs));
 
 				sf::Color color = sf::Color::White;
 				const uint8_t cell_value = grid.getCellContentAt(x, y);

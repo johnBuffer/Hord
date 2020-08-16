@@ -25,7 +25,7 @@ struct Tools
 	template<typename T>
 	static T sign(T x)
 	{
-		return (x >= as<int, T>(0)) + as<int, T>(-1) * (x < as<int, T>(0));
+		return as<T>((x >= as<int, T>(0)) + as<int, T>(-1) * (x < as<int, T>(0)));
 	}
 
 	template<typename T>

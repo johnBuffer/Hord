@@ -83,7 +83,7 @@ struct ComposedObject
 			intertia = 1.0f;
 		}
 		else {
-			addToInertia(p);
+			addToInertia(atoms.back());
 		}
 		mass += 1.0f;
 		computeCenterOfMass();
@@ -98,11 +98,10 @@ struct ComposedObject
 		center_of_mass = com / mass;
 	}
 
-	void addToInertia(const Vec2& p)
+	void addToInertia(const Atom& a)
 	{
-		const float atom_mass = 0.1f;
-		const Vec2 r = center_of_mass - p;
-		intertia += atom_mass * r.getLength2();
+		const Vec2 r = center_of_mass - a.position;
+		intertia += a.mass * r.getLength2();
 	}
 
 	void applyForce(const Vec2& f)
@@ -125,9 +124,9 @@ struct ComposedObject
 		if (!moving) {
 			return;
 		}
-		// Stuff
+		// Need to add moment
 		velocity += (applied_force / mass) * dt;
-		// Reset
+		// Reset forces
 		applied_force = Vec2(0.0f, 0.0f);
 	}
 

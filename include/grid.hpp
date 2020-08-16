@@ -58,7 +58,7 @@ public:
 	{
 		int32_t cell_coords[2];
 		toGridCoords(start, cell_coords);
-		const int32_t step[]{ Tools::sign(direction.x), Tools::sign(direction.y) };
+		const int32_t step[]{ Tools::as<int32_t>(Tools::sign(direction.x)), Tools::as<int32_t>(Tools::sign(direction.y)) };
 		const float cell_size_f = Tools::as<float>(cell_size);
 		const float inv_direction[]{ 1.0f / direction.x, 1.0f / direction.y };
 		const float t_d[]{ std::abs(cell_size_f * inv_direction[0]), std::abs(cell_size_f * inv_direction[1]) };
@@ -118,13 +118,13 @@ private:
 private:
 	sf::Vector2i toGridCoords(const sf::Vector2f& v) const
 	{
-		return sf::Vector2i(v.x / cell_size, v.y / cell_size);
+		return sf::Vector2i(Tools::as<int32_t>(v.x / cell_size), Tools::as<int32_t>(v.y / cell_size));
 	}
 
 	void toGridCoords(const sf::Vector2f& v, int32_t* out) const
 	{
-		out[0] = v.x / cell_size;
-		out[1] = v.y / cell_size;
+		out[0] = Tools::as<int32_t>(v.x / cell_size);
+		out[1] = Tools::as<int32_t>(v.y / cell_size);
 	}
 
 	void clearDebug()

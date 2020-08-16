@@ -48,23 +48,13 @@ int main()
     }
 
 	DisplayManager display_manager(window);
-    display_manager.event_manager.addKeyPressedCallback(sf::Keyboard::C, [&](const sf::Event& ev) {
-        const sf::Vector2i mouse_pos = sf::Mouse::getPosition(window);
-        grid.setCellAtWorld(sf::Vector2f(mouse_pos.x, mouse_pos.y), 1);
-    });
-
-    display_manager.event_manager.addKeyPressedCallback(sf::Keyboard::S, [&](const sf::Event& ev) {
-        const sf::Vector2i mouse_pos = sf::Mouse::getPosition(window);
-        start.x = mouse_pos.x;
-        start.y = mouse_pos.y;
-    });
 
     display_manager.event_manager.addKeyPressedCallback(sf::Keyboard::E, [&](const sf::Event& ev) {
         solver.objects.emplace_back();
-        solver.objects.back().angular_velocity = 2.0f;
+        //solver.objects.back().angular_velocity = 2.0f;
         for (uint32_t x(0); x < 5; ++x) {
             for (uint32_t y(0); y < 5; ++y) {
-                solver.objects.back().addAtom(Vec2(800.0f + x * 2.0f * atom_radius, 370.0f + y * 2.0f * atom_radius));
+                solver.objects.back().addAtom(Vec2(800.0f + x * 2.0f * atom_radius, 350.0f + y * 2.0f * atom_radius));
             }
         }
     });
