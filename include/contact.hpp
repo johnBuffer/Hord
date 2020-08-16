@@ -51,7 +51,6 @@ struct Utils
 	}
 };
 
-// Maybe use double ?
 struct AtomContact
 {
 	Atom* atom_a;
@@ -119,7 +118,7 @@ struct AtomContact
 		j[2] = to_contact_point_a.cross(contact_normal);
 		j[3] = -contact_normal.x;
 		j[4] = -contact_normal.y;
-		j[5] = to_contact_point_b.cross(contact_normal);
+		j[5] = -to_contact_point_b.cross(contact_normal);
 		// Friction
 		const Vec2 contact_tangent = contact_normal.getNormal();
 		j_friction[0] = contact_tangent.x;

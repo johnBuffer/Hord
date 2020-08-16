@@ -14,7 +14,7 @@ struct Solver
 		for (ComposedObject& o1 : objects) {
 			uint32_t k = 0;
 			for (ComposedObject& o2 : objects) {
-				if (k != i) {
+				if (k > i) {
 					for (Atom& a1 : o1.atoms) {
 						for (Atom& a2 : o2.atoms) {
 							AtomContact contact(&a1, &a2);
@@ -49,7 +49,7 @@ struct Solver
 		}
 
 		findContacts();
-		const uint32_t iterations_count = 8;
+		const uint32_t iterations_count = 4;
 		for (uint32_t i(iterations_count); i--;) {
 			for (AtomContact& c : atom_contacts) {
 				c.computeImpulse();
