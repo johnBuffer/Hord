@@ -27,11 +27,25 @@ int main()
     sf::Vector2f end(10.0f, 10.0f);
 
     Solver solver;
-    solver.addBoundary(Vec2(0.0f, -1.0f), WinHeight);
 
     bool pause = false;
     bool step = false;
     const float atom_radius = 12.0f;
+
+    solver.objects.emplace_back();
+    solver.objects.back().moving = false;
+    for (uint32_t x(0); x < WinWidth / (2.0f * atom_radius); ++x) {
+        solver.objects.back().addAtom(Vec2(0.0f + x * 2.0f * atom_radius, WinHeight));
+    }
+    for (uint32_t x(0); x < WinWidth / (2.0f * atom_radius); ++x) {
+        solver.objects.back().addAtom(Vec2(0.0f + x * 2.0f * atom_radius, 0.0f));
+    }
+    for (uint32_t y(0); y < WinHeight / (2.0f * atom_radius); ++y) {
+        solver.objects.back().addAtom(Vec2(0.0f, y * 2.0f * atom_radius));
+    }
+    for (uint32_t y(0); y < WinHeight / (2.0f * atom_radius); ++y) {
+        solver.objects.back().addAtom(Vec2(WinWidth, y * 2.0f * atom_radius));
+    }
 
 	DisplayManager display_manager(window);
     display_manager.event_manager.addKeyPressedCallback(sf::Keyboard::C, [&](const sf::Event& ev) {
@@ -50,7 +64,7 @@ int main()
         solver.objects.back().angular_velocity = 2.0f;
         for (uint32_t x(0); x < 5; ++x) {
             for (uint32_t y(0); y < 5; ++y) {
-                solver.objects.back().addAtom(Vec2(157.0f + x * 2.0f * atom_radius, 370.0f + y * 2.0f * atom_radius));
+                solver.objects.back().addAtom(Vec2(800.0f + x * 2.0f * atom_radius, 370.0f + y * 2.0f * atom_radius));
             }
         }
     });
@@ -81,6 +95,8 @@ int main()
         for (ComposedObject& o : solver.objects) {
             Renderer::renderAtoms(window, o, rs);
         }
+
+        Renderer::renderContacts(window, solver.atom_contacts, rs);
 
 		window.display();
     }

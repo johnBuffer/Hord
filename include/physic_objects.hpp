@@ -71,6 +71,7 @@ struct ComposedObject
 		, applied_force(0.0f, 0.0f)
 		, intertia(0.0f)
 		, mass(0.0f)
+		, moving(true)
 	{}
 
 	void addAtom(const Vec2& p)
@@ -99,8 +100,9 @@ struct ComposedObject
 
 	void addToInertia(const Vec2& p)
 	{
+		const float atom_mass = 0.1f;
 		const Vec2 r = center_of_mass - p;
-		intertia += r.getLength2();
+		intertia += atom_mass * r.getLength2();
 	}
 
 	void applyForce(const Vec2& f)
@@ -113,21 +115,6 @@ struct ComposedObject
 		applyForce(a * getMass());
 	}
 
-	void applyImpulse(const Vec2& linear, float angular)
-	{
-		velocity += linear;
-		angular_velocity += angular;
-		//std::cout << "Linear: (" << linear.x << ", " << linear.y << ") angular: " << angular << std::endl;
-	}
-
-	void applyImpulseAt(const Vec2& linear, const Vec2& position)
-	{
-		//std::cout << "Linear: (" << linear.x << ", " << linear.y << ") angular: " << angular << std::endl;
-		velocity += linear;
-		const Vec2 to_point = position - center_of_mass;
-		angular_velocity += linear.getLength() * to_point.cross(linear.getNormalized()) * 0.016f * 0.016f;
-	}
-
 	float getMass() const
 	{
 		return mass;
@@ -135,6 +122,9 @@ struct ComposedObject
 
 	void update(float dt)
 	{
+		if (!moving) {
+			return;
+		}
 		// Stuff
 		velocity += (applied_force / mass) * dt;
 		// Reset
@@ -143,16 +133,13 @@ struct ComposedObject
 
 	void updateState(float dt)
 	{
-		std::cout << "Vel: " << velocity.x << " " << velocity.y << " angular: " << angular_velocity * dt << std::endl;
+		if (!moving) {
+			return;
+		}
 		translate(velocity * dt);
 		center_of_mass += velocity * dt;
 		rotate(angular_velocity * dt);
 		angle += angular_velocity * dt;
-	}
-
-	void solveCollisions()
-	{
-		
 	}
 
 	float getMomentInertia() const
@@ -179,6 +166,16 @@ struct ComposedObject
 		return (center_of_mass - p).getLength();
 	}
 
+	Vec2 getVelocity() const
+	{
+		return velocity * float(moving);
+	}
+
+	float getAngularVelocity() const
+	{
+		return angular_velocity * float(moving);
+	}
+
 	std::vector<Atom> atoms;
 	Vec2 center_of_mass;
 	Vec2 velocity;
@@ -189,4 +186,6 @@ struct ComposedObject
 
 	float mass;
 	float intertia;
+
+	bool moving;
 };

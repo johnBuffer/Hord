@@ -49,4 +49,20 @@ struct Renderer
 			target.draw(c, rs);
 		}
 	}
+
+	static void renderContacts(sf::RenderTarget& target, const std::list<AtomContact>& contacts, const sf::RenderStates& rs)
+	{
+		sf::VertexArray impulses(sf::Lines, 2 * contacts.size());
+		uint32_t i = 0;
+		for (const AtomContact& c : contacts) {
+			impulses[2 * i].position = sf::Vector2f(c.contact_point.x, c.contact_point.y);
+			impulses[2 * i + 1].position = sf::Vector2f(c.contact_point.x + c.impulse.x, c.contact_point.y + c.impulse.y);
+
+			impulses[2 * i].color = sf::Color::Red;
+			impulses[2 * i + 1].color = sf::Color::Red;
+			++i;
+		}
+
+		target.draw(impulses, rs);
+	}
 };

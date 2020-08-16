@@ -7,43 +7,34 @@
 
 struct Solver
 {
-	void solveCollisions()
+	void findContacts()
 	{
-		
-	}
-
-	void addBoundary(const Vec2& normal, float coord)
-	{
-		boundaries.emplace_back(normal, coord);
-	}
-
-	void solveBoundaryCollisions(float dt)
-	{
-		//contacts.remove_if([&](const HorizontalBoundaryContact& c) { return c.isValid(); });
-		contacts.clear();
-
-		for (ComposedObject& o : objects) {
-			for (Atom& a : o.atoms) {
-				HorizontalBoundaryContact contact(&a, &boundaries.front());
-				if (contact.isValid()) {
-					contact.initialize();
-					contacts.push_back(contact);
-					//contact.computeImpulse();
+		atom_contacts.clear();
+		uint32_t i = 0;
+		for (ComposedObject& o1 : objects) {
+			uint32_t k = 0;
+			for (ComposedObject& o2 : objects) {
+				if (k != i) {
+					for (Atom& a1 : o1.atoms) {
+						for (Atom& a2 : o2.atoms) {
+							AtomContact contact(&a1, &a2);
+							if (contact.isValid()) {
+								//std::cout << "lol" << std::endl;
+								contact.initialize();
+								atom_contacts.push_back(contact);
+							}
+						}
+					}
 				}
+				++k;
 			}
-		}
-
-		const uint32_t iterations_count = 2;
-		for (uint32_t i(iterations_count); i--;) {
-			for (HorizontalBoundaryContact& c : contacts) {
-				c.computeImpulse();
-			}
-		}
+			++i;
+		}	
 	}
 
 	void applyGravity()
 	{
-		const Vec2 gravity(0.0f, 100.0f);
+		const Vec2 gravity(0.0f, 200.0f);
 		for (ComposedObject& o : objects) {
 			o.accelerate(gravity);
 		}
@@ -57,7 +48,13 @@ struct Solver
 			o.update(dt);
 		}
 
-		solveBoundaryCollisions(dt);
+		findContacts();
+		const uint32_t iterations_count = 8;
+		for (uint32_t i(iterations_count); i--;) {
+			for (AtomContact& c : atom_contacts) {
+				c.computeImpulse();
+			}
+		}
 
 		for (ComposedObject& o : objects) {
 			o.updateState(dt);
@@ -65,8 +62,8 @@ struct Solver
 	}
 
 	std::list<ComposedObject> objects;
-	std::list<HorizontalBoundary> boundaries;
-	std::list<HorizontalBoundaryContact> contacts;
+
+	std::list<AtomContact> atom_contacts;
 
 	const Vec2 boundaries_min = Vec2(50.0f, 50.0f);
 	const Vec2 boundaries_max = Vec2(1550.0f, 850.0f);
