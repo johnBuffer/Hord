@@ -85,15 +85,14 @@ struct AtomContact
 		, inv_m(6)
 	{}
 
-	float getDelta2() const
+	float getDelta() const
 	{
 		return (atom_a->position - atom_b->position).getLength() - 2 * atom_a->radius;
 	}
 
 	bool isValid() const
 	{
-		// Need to adapt to other normal
-		return getDelta2() < 0.0f;
+		return getDelta() < 0.0f;
 	}
 
 	Vec2 getContactPointA(const Vec2& collision_vec) const
@@ -111,7 +110,6 @@ struct AtomContact
 		const Vec2 collision_vec = atom_a->position - atom_b->position;
 		const float distance = collision_vec.getLength();
 		contact_normal = collision_vec.getNormalized();
-
 		contact_point = getContactPointA(contact_normal);
 		const Vec2 to_contact_point_a = contact_point - atom_a->parent->center_of_mass;
 		const Vec2 to_contact_point_b = getContactPointB(contact_normal) - atom_b->parent->center_of_mass;
@@ -129,7 +127,7 @@ struct AtomContact
 		j_friction[2] = to_contact_point_a.cross(contact_tangent);
 		j_friction[3] = -contact_tangent.x;
 		j_friction[4] = -contact_tangent.y;
-		j_friction[5] = to_contact_point_b.cross(contact_tangent);
+		j_friction[5] = -to_contact_point_b.cross(contact_tangent);
 		// Intertia
 		const float inv_mass_a = 1.0f / atom_a->parent->getMass();
 		const float inv_moment_intertia_a = 1.0f / atom_a->parent->getMomentInertia();
@@ -142,8 +140,7 @@ struct AtomContact
 		inv_m[4] = inv_mass_b;
 		inv_m[5] = inv_moment_intertia_b;
 
-		const float delta = 2.0f * atom_a->radius - distance;
-		const float c = Vec2(0.0f, delta).dot(contact_normal);
+		const float c = Vec2(0.0f, getDelta()).dot(contact_normal);
 		bias = 0.2f / 0.016f * ((c < 0.0f) ? c : 0.0f);
 
 		accumulated_lambda = 0.0f;
@@ -170,6 +167,7 @@ struct AtomContact
 		}
 		accumulated_lambda += lambda;
 		impulse = contact_normal * accumulated_lambda;
+		// v = MV.VpV(v, MV.VxV(MInv[j], MV.SxV(lambda, Jn[j])));
 		v = Utils::plus(v, Utils::mult(inv_m, Utils::mult(lambda, j)));
 		atom_a->parent->velocity         = Vec2(v[0], v[1]);
 		atom_a->parent->angular_velocity = v[2];
@@ -178,7 +176,7 @@ struct AtomContact
 
 		// Friction
 		// var lambdaFriction = -(MV.dot(Jt[j], v) + 0 * bias[j]) / MV.dot(Jt[j], MV.VxV(MInv[j], Jt[j]));
-		float lambda_friction = -Utils::dot(j_friction, v) / Utils::dot(j_friction, Utils::mult(inv_m, j_friction));
+		/*float lambda_friction = -Utils::dot(j_friction, v) / Utils::dot(j_friction, Utils::mult(inv_m, j_friction));
 		if (lambda_friction > friction * lambda) {
 			lambda_friction = friction * lambda;
 		}
@@ -190,6 +188,6 @@ struct AtomContact
 		atom_a->parent->velocity         = Vec2(v[0], v[1]);
 		atom_a->parent->angular_velocity = v[2];
 		atom_b->parent->velocity         = Vec2(v[3], v[4]);
-		atom_b->parent->angular_velocity = v[5];
+		atom_b->parent->angular_velocity = v[5];*/
 	}
 };
