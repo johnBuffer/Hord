@@ -35,16 +35,16 @@ int main()
     solver.objects.emplace_back();
     solver.objects.back().moving = false;
     for (uint32_t x(0); x < WinWidth / (2.0f * atom_radius); ++x) {
-        solver.objects.back().addAtom(Vec2(0.0f + x * 2.0f * atom_radius, WinHeight));
+        solver.addAtomToLastObject(Vec2(0.0f + x * 2.0f * atom_radius, WinHeight));
     }
     for (uint32_t x(0); x < WinWidth / (2.0f * atom_radius); ++x) {
-        solver.objects.back().addAtom(Vec2(0.0f + x * 2.0f * atom_radius, 0.0f));
+        solver.addAtomToLastObject(Vec2(0.0f + x * 2.0f * atom_radius, 0.0f));
     }
     for (uint32_t y(0); y < WinHeight / (2.0f * atom_radius); ++y) {
-        solver.objects.back().addAtom(Vec2(0.0f, y * 2.0f * atom_radius));
+        solver.addAtomToLastObject(Vec2(0.0f, y * 2.0f * atom_radius));
     }
     for (uint32_t y(0); y < WinHeight / (2.0f * atom_radius); ++y) {
-        solver.objects.back().addAtom(Vec2(WinWidth, y * 2.0f * atom_radius));
+        solver.addAtomToLastObject(Vec2(WinWidth, y * 2.0f * atom_radius));
     }
 
 	DisplayManager display_manager(window);
@@ -56,7 +56,7 @@ int main()
         uint32_t h = rand() % 5 + 1;
         for (uint32_t x(0); x < w; ++x) {
             for (uint32_t y(0); y < h; ++y) {
-                solver.objects.back().addAtom(Vec2(800.0f + x * 2.0f * atom_radius + rand()%2, 350.0f + y * 2.0f * atom_radius));
+                solver.addAtomToLastObject(Vec2(800.0f + x * 2.0f * atom_radius + rand()%2, 350.0f + y * 2.0f * atom_radius));
             }
         }
     });
@@ -89,10 +89,7 @@ int main()
 
         const sf::RenderStates rs = display_manager.getRenderStates();
 
-        for (ComposedObject& o : solver.objects) {
-            Renderer::renderAtoms(window, o, rs);
-        }
-
+        Renderer::renderAtoms(window, solver, rs);
         Renderer::renderContacts(window, solver.atom_contacts, rs);
 
 		window.display();

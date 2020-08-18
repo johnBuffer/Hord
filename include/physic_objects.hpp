@@ -69,26 +69,25 @@ struct ComposedObject
 		, moving(true)
 	{}
 
-	void addAtom(const Vec2& p)
+	void addAtom(uint64_t id, std::vector<Atom>& atoms)
 	{
-		atoms.emplace_back(p);
-		atoms.back().parent = this;
+		atoms_ids.push_back(id);
 
 		if (!mass) {
 			intertia = 1.0f;
 		}
 		else {
-			addToInertia(atoms.back());
+			addToInertia(atoms[id]);
 		}
 		mass += 1.0f;
-		computeCenterOfMass();
+		computeCenterOfMass(atoms);
 	}
 
-	void computeCenterOfMass()
+	void computeCenterOfMass(std::vector<Atom>& atoms)
 	{
 		Vec2 com;
-		for (const Atom& a : atoms) {
-			com += a.position;
+		for (uint64_t id : atoms_ids) {
+			com += atoms[id].position;
 		}
 		center_of_mass = com / mass;
 	}
@@ -125,14 +124,14 @@ struct ComposedObject
 		applied_force = Vec2(0.0f, 0.0f);
 	}
 
-	void updateState(float dt)
+	void updateState(float dt, std::vector<Atom>& atoms)
 	{
 		if (!moving) {
 			return;
 		}
-		translate(velocity * dt);
+		translate(velocity * dt, atoms);
 		center_of_mass += velocity * dt;
-		rotate(angular_velocity * dt);
+		rotate(angular_velocity * dt, atoms);
 		angle += angular_velocity * dt;
 	}
 
@@ -141,17 +140,17 @@ struct ComposedObject
 		return intertia;
 	}
 
-	void translate(const Vec2& v)
+	void translate(const Vec2& v, std::vector<Atom>& atoms)
 	{
-		for (Atom& a : atoms) {
-			a.position += v;
+		for (uint64_t a_id : atoms_ids) {
+			atoms[a_id].position += v;
 		}
 	}
 
-	void rotate(float r)
+	void rotate(float r, std::vector<Atom>& atoms)
 	{
-		for (Atom& a : atoms) {
-			a.position.rotate(center_of_mass, r);
+		for (uint64_t a_id : atoms_ids) {
+			atoms[a_id].position.rotate(center_of_mass, r);
 		}
 	}
 
@@ -179,7 +178,7 @@ struct ComposedObject
 		return next_position;
 	}
 
-	std::vector<Atom> atoms;
+	std::vector<uint64_t> atoms_ids;
 	Vec2 center_of_mass;
 	Vec2 velocity;
 	Vec2 applied_force;

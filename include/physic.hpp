@@ -10,26 +10,20 @@ struct Solver
 {
 	void findContacts()
 	{
+		// Check for persistence here
 		atom_contacts.clear();
-		uint32_t i = 0;
-		for (ComposedObject& o1 : objects) {
-			uint32_t k = 0;
-			for (ComposedObject& o2 : objects) {
-				if (k != i) {
-					for (Atom& a1 : o1.atoms) {
-						for (Atom& a2 : o2.atoms) {
-							AtomContact contact(&a1, &a2);
-							if (contact.isValid()) {
-								contact.initialize();
-								atom_contacts.push_back(contact);
-							}
-						}
+		const size_t atoms_count = atoms.size();
+		for (uint64_t i(0); i < atoms_count; ++i) {
+			for (uint64_t k(i+1); k < atoms_count; ++k) {
+				if (atoms[i].parent != atoms[k].parent) {
+					AtomContact contact(&atoms[i], &atoms[k]);
+					if (contact.isValid()) {
+						contact.initialize();
+						atom_contacts.push_back(contact);
 					}
 				}
-				++k;
 			}
-			++i;
-		}	
+		}
 	}
 
 	void applyGravity()
@@ -57,14 +51,20 @@ struct Solver
 		}
 
 		for (ComposedObject& o : objects) {
-			o.updateState(dt);
+			o.updateState(dt, atoms);
 		}
 	}
 
+	void addAtomToLastObject(const Vec2& position, float mass=1.0f)
+	{
+		atoms.emplace_back(position);
+		objects.back().addAtom(atoms.size() - 1, atoms);
+		atoms.back().parent = &objects.back();
+	}
+
+	std::vector<Atom> atoms;
 	std::list<ComposedObject> objects;
 	std::list<AtomContact> atom_contacts;
-
-	std::map<Atom*, std::vector<Atom*>> contacts;
 
 	const Vec2 boundaries_min = Vec2(50.0f, 50.0f);
 	const Vec2 boundaries_max = Vec2(1550.0f, 850.0f);

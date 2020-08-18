@@ -38,9 +38,9 @@ struct Renderer
 		target.draw(va, rs);
 	}
 
-	static void renderAtoms(sf::RenderTarget& target, const ComposedObject& object, const sf::RenderStates& rs)
+	static void renderAtoms(sf::RenderTarget& target, const Solver& solver, const sf::RenderStates& rs)
 	{
-		for (const Atom& a : object.atoms) {
+		for (const Atom& a : solver.atoms) {
 			const float radius = a.radius;
 			sf::CircleShape c(radius);
 			c.setOrigin(radius, radius);
