@@ -59,7 +59,6 @@ struct Solver
 	{
 		atoms.emplace_back(position);
 		objects.back().addAtom(atoms.size() - 1, atoms);
-		atoms.back().parent = &objects.back();
 	}
 
 	std::vector<Atom> atoms;

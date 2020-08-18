@@ -72,14 +72,15 @@ struct ComposedObject
 	void addAtom(uint64_t id, std::vector<Atom>& atoms)
 	{
 		atoms_ids.push_back(id);
-
+		Atom& new_atom = atoms[id];
+		new_atom.parent = this;
 		if (!mass) {
-			intertia = 1.0f;
+			intertia = new_atom.mass;
 		}
 		else {
-			addToInertia(atoms[id]);
+			addToInertia(new_atom);
 		}
-		mass += 1.0f;
+		mass += new_atom.mass;
 		computeCenterOfMass(atoms);
 	}
 
