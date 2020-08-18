@@ -145,7 +145,6 @@ struct AtomContact
 
 		const float c = Vec2(0.0f, delta).dot(contact_normal);
 		bias = 0.2f / 0.016f * ((c < 0.0f) ? c : 0.0f);
-
 		accumulated_lambda = 0.0f;
 	}
 

@@ -3,6 +3,7 @@
 #include <list>
 #include "physic_objects.hpp"
 #include "contact.hpp"
+#include <set>
 
 
 struct Solver
@@ -14,12 +15,11 @@ struct Solver
 		for (ComposedObject& o1 : objects) {
 			uint32_t k = 0;
 			for (ComposedObject& o2 : objects) {
-				if (k > i) {
+				if (k != i) {
 					for (Atom& a1 : o1.atoms) {
 						for (Atom& a2 : o2.atoms) {
 							AtomContact contact(&a1, &a2);
 							if (contact.isValid()) {
-								//std::cout << "lol" << std::endl;
 								contact.initialize();
 								atom_contacts.push_back(contact);
 							}
@@ -34,7 +34,7 @@ struct Solver
 
 	void applyGravity()
 	{
-		const Vec2 gravity(0.0f, 400.0f);
+		const Vec2 gravity(0.0f, 980.0f);
 		for (ComposedObject& o : objects) {
 			o.accelerate(gravity);
 		}
@@ -62,8 +62,9 @@ struct Solver
 	}
 
 	std::list<ComposedObject> objects;
-
 	std::list<AtomContact> atom_contacts;
+
+	std::map<Atom*, std::vector<Atom*>> contacts;
 
 	const Vec2 boundaries_min = Vec2(50.0f, 50.0f);
 	const Vec2 boundaries_max = Vec2(1550.0f, 850.0f);

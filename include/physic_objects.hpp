@@ -38,11 +38,6 @@ struct Atom
 		, parent(nullptr)
 	{}
 
-	float getDistance2With(const Atom& other) const
-	{
-		return (position - other.position).getLength();
-	}
-
 	void reset()
 	{
 		acceleration = {};
@@ -173,6 +168,15 @@ struct ComposedObject
 	float getAngularVelocity() const
 	{
 		return angular_velocity * float(moving);
+	}
+
+	Vec2 getAtomNextPosition(const Atom* a) const
+	{
+		const float dt = 0.016f;
+		const Vec2 next_com = center_of_mass.plus(velocity * dt);
+		Vec2 next_position = a->position.plus(velocity * dt);
+		next_position.rotate(next_com, angular_velocity * dt);
+		return next_position;
 	}
 
 	std::vector<Atom> atoms;

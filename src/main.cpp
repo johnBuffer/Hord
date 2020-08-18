@@ -51,10 +51,12 @@ int main()
 
     display_manager.event_manager.addKeyPressedCallback(sf::Keyboard::E, [&](const sf::Event& ev) {
         solver.objects.emplace_back();
-        //solver.objects.back().angular_velocity = 2.0f;
-        for (uint32_t x(0); x < 5; ++x) {
-            for (uint32_t y(0); y < 5; ++y) {
-                solver.objects.back().addAtom(Vec2(800.0f + x * 2.0f * atom_radius, 350.0f + y * 2.0f * atom_radius));
+        solver.objects.back().angular_velocity = -2.0f;
+        uint32_t w = rand() % 5 + 1;
+        uint32_t h = rand() % 5 + 1;
+        for (uint32_t x(0); x < w; ++x) {
+            for (uint32_t y(0); y < h; ++y) {
+                solver.objects.back().addAtom(Vec2(800.0f + x * 2.0f * atom_radius + rand()%2, 350.0f + y * 2.0f * atom_radius));
             }
         }
     });
@@ -72,6 +74,11 @@ int main()
     while (window.isOpen()) {
         display_manager.processEvents();
         const sf::Vector2i mouse_pos = sf::Mouse::getPosition(window);
+
+        /*if (pause) {
+            solver.objects.emplace_back();
+            solver.objects.back().addAtom(Vec2(800.0f + rand() % 2, 350.0f));
+        }*/
 
         if (step || !pause) {
             solver.update(dt);
