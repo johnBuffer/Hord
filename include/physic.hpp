@@ -8,18 +8,68 @@
 
 struct Solver
 {
+	Solver()
+	{
+		contacts_states.resize(1000);
+		for (std::vector<uint64_t>& v : contacts_states) {
+			v.resize(1000);
+		}
+	}
+
+	bool isNewContact(uint64_t i, uint64_t k) const
+	{
+		return !(contacts_states[i][k] + contacts_states[k][i]);
+	}
+
+	void setContact(uint64_t i, uint64_t k)
+	{
+		contacts_states[i][k] = 1;
+	}
+
+	void removeContact(uint64_t i, uint64_t k)
+	{
+		contacts_states[i][k] = 0;
+		contacts_states[k][i] = 0;
+	}
+
+	void updateContacts()
+	{
+		for (auto it = atom_contacts.begin(); it != atom_contacts.end(); ++it) {
+			if (it->isValid(atoms)) {
+				it->initialize_jacobians(atoms);
+			}
+			else {
+				removeContact(it->id_a, it->id_b);
+				it = atom_contacts.erase(it)--;
+			}
+		}
+	}
+
 	void findContacts()
 	{
 		// Check for persistence here
-		atom_contacts.clear();
+		atom_contacts.remove_if([&](AtomContact& c) { 
+			if (c.isValid(atoms)) {
+				c.initialize_jacobians(atoms);
+				return false;
+			}
+			else {
+				removeContact(c.id_a, c.id_b);
+				return true;
+			}
+		});
+		//atom_contacts.clear();
+		//updateContacts();
+		
 		const size_t atoms_count = atoms.size();
 		for (uint64_t i(0); i < atoms_count; ++i) {
-			for (uint64_t k(i+1); k < atoms_count; ++k) {
-				if (atoms[i].parent != atoms[k].parent) {
-					AtomContact contact(&atoms[i], &atoms[k]);
-					if (contact.isValid()) {
-						contact.initialize();
+			for (uint64_t k(0); k < atoms_count; ++k) {
+				if (isNewContact(i, k) && atoms[i].parent != atoms[k].parent) {
+					AtomContact contact(i, k);
+					if (contact.isValid(atoms)) {
+						contact.initialize(atoms);
 						atom_contacts.push_back(contact);
+						setContact(i, k);
 					}
 				}
 			}
@@ -46,7 +96,7 @@ struct Solver
 		const uint32_t iterations_count = 16;
 		for (uint32_t i(iterations_count); i--;) {
 			for (AtomContact& c : atom_contacts) {
-				c.computeImpulse();
+				c.computeImpulse(atoms);
 			}
 		}
 
@@ -64,6 +114,8 @@ struct Solver
 	std::vector<Atom> atoms;
 	std::list<ComposedObject> objects;
 	std::list<AtomContact> atom_contacts;
+
+	std::vector<std::vector<uint64_t>> contacts_states;
 
 	const Vec2 boundaries_min = Vec2(50.0f, 50.0f);
 	const Vec2 boundaries_max = Vec2(1550.0f, 850.0f);
