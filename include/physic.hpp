@@ -51,6 +51,7 @@ struct Solver
 		atom_contacts.remove_if([&](AtomContact& c) { 
 			if (c.isValid(atoms)) {
 				c.initialize_jacobians(atoms);
+				c.applyImpulse(atoms);
 				return false;
 			}
 			else {

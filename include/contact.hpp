@@ -71,6 +71,7 @@ struct AtomContact
 	Array<float, 6> j;
 	Array<float, 6> j_friction;
 	Array<float, 6> inv_m;
+	Array<float, 6> v;
 
 	Vec2 impulse;
 	Vec2 contact_point;
@@ -123,7 +124,6 @@ struct AtomContact
 		inv_m[3] = inv_mass_b;
 		inv_m[4] = inv_mass_b;
 		inv_m[5] = 1.0f / atom_b.parent->getMomentInertia();
-		accumulated_lambda = 0.0f;
 
 		// Jacobians
 		initialize_jacobians(atoms);
@@ -158,10 +158,22 @@ struct AtomContact
 
 		const float c = Vec2(0.0f, delta).dot(contact_normal);
 		bias = 0.2f / 0.016f * ((c < 0.0f) ? c : 0.0f);
+		accumulated_lambda = 0.0f;
 	}
 
-	void applyImpulse(const Array<float, 6>& v, Atom& atom_a, Atom& atom_b)
+	void applyImpulse(Atom& atom_a, Atom& atom_b)
 	{
+		atom_a.parent->velocity = Vec2(v[0], v[1]);
+		atom_a.parent->angular_velocity = v[2];
+		atom_b.parent->velocity = Vec2(v[3], v[4]);
+		atom_b.parent->angular_velocity = v[5];
+	}
+
+	void applyImpulse(std::vector<Atom>& atoms)
+	{
+		Atom& atom_a = atoms[id_a];
+		Atom& atom_b = atoms[id_b];
+
 		atom_a.parent->velocity = Vec2(v[0], v[1]);
 		atom_a.parent->angular_velocity = v[2];
 		atom_b.parent->velocity = Vec2(v[3], v[4]);
@@ -175,7 +187,7 @@ struct AtomContact
 
 		const Vec2 body_1_velocity = atom_a.parent->getVelocity();
 		const Vec2 body_2_velocity = atom_b.parent->getVelocity();
-		Array<float, 6> v = {
+		v = {
 			body_1_velocity.x,
 			body_1_velocity.y,
 			atom_a.parent->getAngularVelocity(),
@@ -192,7 +204,7 @@ struct AtomContact
 		accumulated_lambda += lambda;
 		impulse = contact_normal * accumulated_lambda;
 		Utils::add(v, Utils::mult(inv_m, Utils::mult(lambda, j)));
-		applyImpulse(v, atom_a, atom_b);
+		applyImpulse(atom_a, atom_b);
 
 		// Friction
 		float lambda_friction = -Utils::dot(j_friction, v) / Utils::dot(j_friction, Utils::mult(inv_m, j_friction));
@@ -204,6 +216,6 @@ struct AtomContact
 		}
 
 		Utils::add(v, Utils::mult(inv_m, Utils::mult(lambda_friction, j_friction)));
-		applyImpulse(v, atom_a, atom_b);
+		applyImpulse(atom_a, atom_b);
 	}
 };
