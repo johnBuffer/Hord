@@ -116,22 +116,40 @@ struct Solver
 	void checkBroke()
 	{
 		const float threshold = 200.0f;
+		const float fragile_factor = 0.15f;
 		for (const AtomContact& c : atom_contacts) {
+			ComposedObject& object_1 = *atoms[c.id_a].parent;
+			ComposedObject& object_2 = *atoms[c.id_b].parent;
 			if (std::abs(c.lambda) > threshold) {
-				breakObject(*atoms[c.id_a].parent, c);
-				breakObject(*atoms[c.id_b].parent, c);
+				breakObject(object_1, c);
+				breakObject(object_2, c);
+			}
+			else {
+				if (object_1.break_free < 4) {
+					if (std::abs(c.lambda) > threshold * fragile_factor) {
+						breakObject(object_1, c);
+					}
+				}
+
+				if (object_2.break_free < 4) {
+					if (std::abs(c.lambda) > threshold * fragile_factor) {
+						breakObject(object_2, c);
+					}
+				}
 			}
 		}
 	}
 
 	void breakObject(ComposedObject& object, const AtomContact& c)
 	{
-		uint32_t break_free_threshold = 40;
-		if (!object.moving || object.break_free < break_free_threshold) {
+		uint32_t break_free_threshold = 0;
+		if (!object.moving) {
 			return;
 		}
 
-		object.break_free = 0;
+		if (object.break_free > 4) {
+			object.break_free = 0;
+		}
 
 		const Vec2 separation_vec = c.impulse.getNormal();
 
@@ -147,6 +165,7 @@ struct Solver
 			std::list<uint64_t> to_remove;
 			objects.emplace_back();
 			ComposedObject& new_object = objects.back();
+			new_object.break_free = object.break_free;
 			for (uint64_t id : object.atoms_ids) {
 				Atom& atom = atoms[id];
 				if ((atom.position - c.contact_point).dot(separation_vec) < 0.0f) {
