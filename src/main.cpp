@@ -72,20 +72,19 @@ int main()
         pause = !pause;
     });
 
+    ComposedObject* current_object = nullptr;
     display_manager.event_manager.addKeyPressedCallback(sf::Keyboard::A, [&](const sf::Event& ev) {
         building = !building;
 
         if (building) {
             solver.objects.emplace_back();
             solver.objects.back().moving = false;
+            current_object = &solver.objects.back();
         }
         else {
             grid.reset();
             if (solver.objects.back().atoms_ids.size()) {
-                solver.objects.back().moving = true;
-            }
-            else {
-                solver.objects.pop_back();
+                current_object->moving = true;
             }
         }
     });
@@ -107,7 +106,7 @@ int main()
             if (!grid.getCellContentAtWorld(mouse_world_pos)) {
                 grid.setCellAtWorld(mouse_world_pos, 1);
                 const sf::Vector2f atom_pos = grid.getDiscretizedCoords(mouse_world_pos);
-                solver.addAtomToLastObject(Vec2(atom_pos.x, atom_pos.y));
+                solver.addAtomTo(Vec2(atom_pos.x, atom_pos.y), *current_object);
             }
         }
         

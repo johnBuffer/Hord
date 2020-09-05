@@ -113,9 +113,15 @@ struct Solver
 		objects.back().addAtom(atoms.size() - 1, atoms);
 	}
 
+	void addAtomTo(const Vec2& position, ComposedObject& object)
+	{
+		atoms.emplace_back(position);
+		object.addAtom(atoms.size() - 1, atoms);
+	}
+
 	void checkBroke()
 	{
-		const float threshold = 200.0f;
+		const float threshold = 100.0f;
 		const float fragile_factor = 0.15f;
 		for (const AtomContact& c : atom_contacts) {
 			ComposedObject& object_1 = *atoms[c.id_a].parent;
@@ -125,13 +131,13 @@ struct Solver
 				breakObject(object_2, c);
 			}
 			else {
-				if (object_1.break_free < 4) {
+				if (object_1.break_free < 2) {
 					if (std::abs(c.lambda) > threshold * fragile_factor) {
 						breakObject(object_1, c);
 					}
 				}
 
-				if (object_2.break_free < 4) {
+				if (object_2.break_free < 2) {
 					if (std::abs(c.lambda) > threshold * fragile_factor) {
 						breakObject(object_2, c);
 					}
@@ -147,7 +153,7 @@ struct Solver
 			return;
 		}
 
-		if (object.break_free > 4) {
+		if (object.break_free > 2) {
 			object.break_free = 0;
 		}
 
@@ -193,7 +199,4 @@ struct Solver
 	std::list<AtomContact> atom_contacts;
 
 	std::vector<std::vector<uint64_t>> contacts_states;
-
-	const Vec2 boundaries_min = Vec2(50.0f, 50.0f);
-	const Vec2 boundaries_max = Vec2(1550.0f, 850.0f);
 };
