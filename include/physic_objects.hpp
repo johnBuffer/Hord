@@ -108,7 +108,7 @@ struct ComposedObject
 
 	void applyForce(const Vec2& f)
 	{
-		applied_force += f;
+		applied_force += f * float(moving);
 	}
 
 	void accelerate(const Vec2& a)

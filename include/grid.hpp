@@ -88,11 +88,24 @@ public:
 		setCellAt(grid_coords.x, grid_coords.y, value);
 	}
 
+	void reset()
+	{
+		for (uint8_t& i : data) {
+			i = 0;
+		}
+	}
+
 	void setCellAt(int32_t x, int32_t y, uint8_t value)
 	{
 		if (checkCoords(x, y)) {
 			data[getIndexFromCoords(x, y)] = value;
 		}
+	}
+
+	uint8_t getCellContentAtWorld(const sf::Vector2f& world_position)
+	{
+		const sf::Vector2i grid_coords = toGridCoords(world_position);
+		return getCellContentAt(grid_coords.x, grid_coords.y);
 	}
 
 	uint8_t getCellContentAt(int32_t x, int32_t y) const
@@ -107,6 +120,12 @@ public:
 	GridInfo getInfo() const
 	{
 		return GridInfo(cell_size, width, height);
+	}
+
+	sf::Vector2f getDiscretizedCoords(const sf::Vector2f& world_coords) const
+	{
+		const sf::Vector2i grid_coords = toGridCoords(world_coords);
+		return float(cell_size) * (sf::Vector2f(grid_coords.x, grid_coords.y) + sf::Vector2f(0.5f, 0.5f));
 	}
 
 private:

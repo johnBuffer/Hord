@@ -104,7 +104,7 @@ struct Solver
 			o.updateState(dt, atoms);
 		}
 
-		//checkBroke();
+		checkBroke();
 	}
 
 	void addAtomToLastObject(const Vec2& position, float mass=1.0f)

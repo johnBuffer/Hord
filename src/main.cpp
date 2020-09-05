@@ -19,10 +19,11 @@ int main()
 	constexpr uint32_t WinWidth  = 1920;
 	constexpr uint32_t WinHeight = 1080;
 
-    sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Phys", sf::Style::Fullscreen, settings);
+    sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Phys", sf::Style::Default, settings);
     window.setFramerateLimit(60);
 
-    Grid grid(20, 80, 45);
+    const float atom_radius = 8.0f;
+    Grid grid(static_cast<uint64_t>(2.0f * atom_radius), WinWidth / static_cast<uint64_t>(2.0f * atom_radius), WinHeight / static_cast<uint64_t>(2.0f * atom_radius));
     sf::Vector2f start(0.0f, 0.0f);
     sf::Vector2f end(10.0f, 10.0f);
 
@@ -30,7 +31,7 @@ int main()
 
     bool pause = false;
     bool step = false;
-    const float atom_radius = 8.0f;
+    bool building = false;
 
     solver.objects.emplace_back();
     solver.objects.back().moving = false;
@@ -71,6 +72,24 @@ int main()
         pause = !pause;
     });
 
+    display_manager.event_manager.addKeyPressedCallback(sf::Keyboard::A, [&](const sf::Event& ev) {
+        building = !building;
+
+        if (building) {
+            solver.objects.emplace_back();
+            solver.objects.back().moving = false;
+        }
+        else {
+            grid.reset();
+            if (solver.objects.back().atoms_ids.size()) {
+                solver.objects.back().moving = true;
+            }
+            else {
+                solver.objects.pop_back();
+            }
+        }
+    });
+
     const float dt = 0.016f;
 
     while (window.isOpen()) {
@@ -82,7 +101,15 @@ int main()
             solver.addAtomToLastObject(Vec2(800.0f + rand() % 2, 350.0f));
         }
 
-		//std::cout << solver.objects.size() << std::endl;
+		//std::cout << solver.objects.size() << std::endl
+        if (building) {
+            const sf::Vector2f mouse_world_pos = sf::Vector2f(mouse_pos.x, mouse_pos.y);
+            if (!grid.getCellContentAtWorld(mouse_world_pos)) {
+                grid.setCellAtWorld(mouse_world_pos, 1);
+                const sf::Vector2f atom_pos = grid.getDiscretizedCoords(mouse_world_pos);
+                solver.addAtomToLastObject(Vec2(atom_pos.x, atom_pos.y));
+            }
+        }
         
 		solver.update(dt);
 		step = false;
