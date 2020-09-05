@@ -67,6 +67,7 @@ struct ComposedObject
 		, intertia(0.0f)
 		, mass(0.0f)
 		, moving(true)
+		, break_free(0)
 	{}
 
 	void addAtom(uint64_t id, std::vector<Atom>& atoms)
@@ -84,7 +85,7 @@ struct ComposedObject
 		computeCenterOfMass(atoms);
 	}
 
-	void computeCenterOfMass(std::vector<Atom>& atoms)
+	void computeCenterOfMass(const std::vector<Atom>& atoms)
 	{
 		Vec2 com;
 		for (uint64_t id : atoms_ids) {
@@ -97,6 +98,12 @@ struct ComposedObject
 	{
 		const Vec2 r = center_of_mass - a.position;
 		intertia += a.mass * r.getLength2();
+	}
+
+	void removeToInertia(const Atom& a)
+	{
+		const Vec2 r = center_of_mass - a.position;
+		intertia -= a.mass * r.getLength2();
 	}
 
 	void applyForce(const Vec2& f)
@@ -119,6 +126,9 @@ struct ComposedObject
 		if (!moving) {
 			return;
 		}
+
+		++break_free;
+
 		// Need to add moment
 		velocity += (applied_force / mass) * dt;
 		// Reset forces
@@ -178,6 +188,25 @@ struct ComposedObject
 		next_position.rotate(next_com, angular_velocity * dt);
 		return next_position;
 	}
+
+	void removeAtom(uint64_t id, const std::vector<Atom>& atoms)
+	{
+		uint64_t i = 0;
+		for (uint64_t a_id : atoms_ids) {
+			if (a_id == id) {
+				std::swap(atoms_ids.back(), atoms_ids[i]);
+				atoms_ids.pop_back();
+
+				mass -= atoms[id].mass;
+				removeToInertia(atoms[id]);
+				computeCenterOfMass(atoms);
+				return;
+			}
+			++i;
+		}
+	}
+
+	uint32_t break_free;
 
 	std::vector<uint64_t> atoms_ids;
 	Vec2 center_of_mass;

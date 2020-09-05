@@ -16,10 +16,10 @@ int main()
 {
     sf::ContextSettings settings;
     settings.antialiasingLevel = 8;
-	constexpr uint32_t WinWidth  = 1600;
-	constexpr uint32_t WinHeight = 900;
+	constexpr uint32_t WinWidth  = 1920;
+	constexpr uint32_t WinHeight = 1080;
 
-    sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Hord", sf::Style::Default, settings);
+    sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Phys", sf::Style::Fullscreen, settings);
     window.setFramerateLimit(60);
 
     Grid grid(20, 80, 45);
@@ -47,6 +47,8 @@ int main()
         solver.addAtomToLastObject(Vec2(WinWidth, y * 2.0f * atom_radius));
     }
 
+	sf::Vector2i mouse_pos;
+
 	DisplayManager display_manager(window);
 
     display_manager.event_manager.addKeyPressedCallback(sf::Keyboard::E, [&](const sf::Event& ev) {
@@ -56,7 +58,7 @@ int main()
         uint32_t h = 5;
         for (uint32_t x(0); x < w; ++x) {
             for (uint32_t y(0); y < h; ++y) {
-                solver.addAtomToLastObject(Vec2(800.0f + x * 2.0f * atom_radius + rand()%2, 350.0f + y * 2.0f * atom_radius));
+                solver.addAtomToLastObject(Vec2(mouse_pos.x + x * 2.0f * atom_radius + rand()%2, mouse_pos.y + y * 2.0f * atom_radius));
             }
         }
     });
@@ -73,13 +75,14 @@ int main()
 
     while (window.isOpen()) {
         display_manager.processEvents();
-        const sf::Vector2i mouse_pos = sf::Mouse::getPosition(window);
+        mouse_pos = sf::Mouse::getPosition(window);
 
         if (pause) {
             solver.objects.emplace_back();
             solver.addAtomToLastObject(Vec2(800.0f + rand() % 2, 350.0f));
         }
 
+		//std::cout << solver.objects.size() << std::endl;
         
 		solver.update(dt);
 		step = false;
