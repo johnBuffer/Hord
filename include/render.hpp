@@ -58,8 +58,9 @@ struct Renderer
 			impulses[2 * i].position = sf::Vector2f(c.contact_point.x, c.contact_point.y);
 			impulses[2 * i + 1].position = sf::Vector2f(c.contact_point.x + c.impulse.x, c.contact_point.y + c.impulse.y);
 
-			impulses[2 * i].color = sf::Color::Red;
-			impulses[2 * i + 1].color = sf::Color::Red;
+			const sf::Color color = c.tick_count > 10 ? sf::Color::Blue : sf::Color::Red;
+			impulses[2 * i].color = color;
+			impulses[2 * i + 1].color = color;
 			++i;
 		}
 

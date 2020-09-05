@@ -20,7 +20,7 @@ int main()
 	constexpr uint32_t WinHeight = 900;
 
     sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Hord", sf::Style::Default, settings);
-    window.setVerticalSyncEnabled(true);
+    window.setFramerateLimit(60);
 
     Grid grid(20, 80, 45);
     sf::Vector2f start(0.0f, 0.0f);
@@ -52,8 +52,8 @@ int main()
     display_manager.event_manager.addKeyPressedCallback(sf::Keyboard::E, [&](const sf::Event& ev) {
         solver.objects.emplace_back();
         solver.objects.back().angular_velocity = -2.0f;
-        uint32_t w = rand() % 5 + 1;
-        uint32_t h = rand() % 5 + 1;
+        uint32_t w = 5;
+        uint32_t h = 5;
         for (uint32_t x(0); x < w; ++x) {
             for (uint32_t y(0); y < h; ++y) {
                 solver.addAtomToLastObject(Vec2(800.0f + x * 2.0f * atom_radius + rand()%2, 350.0f + y * 2.0f * atom_radius));
@@ -75,15 +75,14 @@ int main()
         display_manager.processEvents();
         const sf::Vector2i mouse_pos = sf::Mouse::getPosition(window);
 
-        /*if (pause) {
+        if (pause) {
             solver.objects.emplace_back();
-            solver.objects.back().addAtom(Vec2(800.0f + rand() % 2, 350.0f));
-        }*/
-
-        if (step || !pause) {
-            solver.update(dt);
-            step = false;
+            solver.addAtomToLastObject(Vec2(800.0f + rand() % 2, 350.0f));
         }
+
+        
+		solver.update(dt);
+		step = false;
 
         window.clear(sf::Color::Black);
 

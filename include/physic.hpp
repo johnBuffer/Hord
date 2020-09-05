@@ -51,7 +51,7 @@ struct Solver
 		atom_contacts.remove_if([&](AtomContact& c) { 
 			if (c.isValid(atoms)) {
 				c.initialize_jacobians(atoms);
-				c.applyImpulse(atoms);
+				c.applyLastImpulse(atoms);
 				return false;
 			}
 			else {
@@ -59,8 +59,6 @@ struct Solver
 				return true;
 			}
 		});
-		//atom_contacts.clear();
-		//updateContacts();
 		
 		const size_t atoms_count = atoms.size();
 		for (uint64_t i(0); i < atoms_count; ++i) {
@@ -79,7 +77,7 @@ struct Solver
 
 	void applyGravity()
 	{
-		const Vec2 gravity(0.0f, 980.0f);
+		const Vec2 gravity(0.0f, 500.0f);
 		for (ComposedObject& o : objects) {
 			o.accelerate(gravity);
 		}
@@ -94,7 +92,7 @@ struct Solver
 		}
 
 		findContacts();
-		const uint32_t iterations_count = 16;
+		const uint32_t iterations_count = 8;
 		for (uint32_t i(iterations_count); i--;) {
 			for (AtomContact& c : atom_contacts) {
 				c.computeImpulse(atoms);
