@@ -121,8 +121,8 @@ struct Solver
 
 	void checkBroke()
 	{
-		const float threshold = 100.0f;
-		const float fragile_factor = 0.15f;
+		const float threshold = 70000.0f;
+		const float fragile_factor = 0.5f;
 		for (const AtomContact& c : atom_contacts) {
 			ComposedObject& object_1 = *atoms[c.id_a].parent;
 			ComposedObject& object_2 = *atoms[c.id_b].parent;

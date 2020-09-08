@@ -19,7 +19,7 @@ int main()
 	constexpr uint32_t WinWidth  = 1920;
 	constexpr uint32_t WinHeight = 1080;
 
-    sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Phys", sf::Style::Default, settings);
+    sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Phys", sf::Style::Fullscreen, settings);
     window.setFramerateLimit(60);
 
     const float atom_radius = 8.0f;
@@ -38,7 +38,7 @@ int main()
     for (uint32_t x(0); x < WinWidth / (2.0f * atom_radius); ++x) {
         solver.addAtomToLastObject(Vec2(0.0f + x * 2.0f * atom_radius, WinHeight));
     }
-    for (uint32_t x(0); x < WinWidth / (2.0f * atom_radius); ++x) {
+    /*for (uint32_t x(0); x < WinWidth / (2.0f * atom_radius); ++x) {
         solver.addAtomToLastObject(Vec2(0.0f + x * 2.0f * atom_radius, 0.0f));
     }
     for (uint32_t y(0); y < WinHeight / (2.0f * atom_radius); ++y) {
@@ -46,7 +46,7 @@ int main()
     }
     for (uint32_t y(0); y < WinHeight / (2.0f * atom_radius); ++y) {
         solver.addAtomToLastObject(Vec2(WinWidth, y * 2.0f * atom_radius));
-    }
+    }*/
 
 	sf::Vector2i mouse_pos;
 
@@ -118,7 +118,7 @@ int main()
         const sf::RenderStates rs = display_manager.getRenderStates();
 
         Renderer::renderAtoms(window, solver, rs);
-        Renderer::renderContacts(window, solver.atom_contacts, rs);
+        //Renderer::renderContacts(window, solver.atom_contacts, rs);
 
 		window.display();
     }
