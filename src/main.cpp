@@ -100,7 +100,6 @@ int main()
             solver.addAtomToLastObject(Vec2(800.0f + rand() % 2, 350.0f));
         }
 
-		//std::cout << solver.objects.size() << std::endl
         if (building) {
             const sf::Vector2f mouse_world_pos = sf::Vector2f(mouse_pos.x, mouse_pos.y);
             if (!grid.getCellContentAtWorld(mouse_world_pos)) {
@@ -118,7 +117,7 @@ int main()
         const sf::RenderStates rs = display_manager.getRenderStates();
 
         Renderer::renderAtoms(window, solver, rs);
-        //Renderer::renderContacts(window, solver.atom_contacts, rs);
+        Renderer::renderContacts(window, solver.atom_contacts, rs);
 
 		window.display();
     }

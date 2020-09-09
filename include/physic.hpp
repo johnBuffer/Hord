@@ -19,7 +19,7 @@ struct Solver
 
 	bool isNewContact(uint64_t i, uint64_t k) const
 	{
-		return !(contacts_states[i][k] + contacts_states[k][i]);
+		return !(contacts_states[i][k]);
 	}
 
 	void setContact(uint64_t i, uint64_t k)
@@ -93,7 +93,7 @@ struct Solver
 		}
 
 		findContacts();
-		const uint32_t iterations_count = 8;
+		const uint32_t iterations_count = 4;
 		for (uint32_t i(iterations_count); i--;) {
 			for (AtomContact& c : atom_contacts) {
 				c.computeImpulse(atoms);

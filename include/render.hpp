@@ -45,8 +45,8 @@ struct Renderer
 			sf::CircleShape c(radius);
 			c.setOrigin(radius, radius);
 			srand(a.parent->atoms_ids[0]);
-			//c.setFillColor(sf::Color(rand()%255, rand() % 255, rand() % 255));
-			c.setFillColor(sf::Color::Green);
+			c.setFillColor(sf::Color(rand()%255, rand() % 255, rand() % 255));
+			//c.setFillColor(sf::Color::Green);
 			c.setPosition(a.position.x, a.position.y);
 			target.draw(c, rs);
 		}

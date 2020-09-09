@@ -165,8 +165,9 @@ struct AtomContact
 		j_friction[4] = -contact_tangent.y;
 		j_friction[5] = -to_contact_point_b.cross(contact_tangent);
 
-		const float c = Vec2(0.0f, delta).dot(contact_normal);
-		bias = 0.2f / 0.016f * ((c < 0.0f) ? c : 0.0f);
+		const float dt = 0.016f;
+		const float bias_factor = 0.1f;
+		bias = bias_factor / dt * std::min(delta, 0.0f);
 		accumulated_lambda = 0.0f;
 	}
 
