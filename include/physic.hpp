@@ -9,6 +9,7 @@
 struct Solver
 {
 	Solver()
+		: frame_count(0)
 	{
 		const uint32_t max_atoms_count = 5000;
 		contacts_states.resize(max_atoms_count);
@@ -19,7 +20,7 @@ struct Solver
 
 	bool isNewContact(uint64_t i, uint64_t k) const
 	{
-		return !(contacts_states[i][k]);
+		return !(contacts_states[i][k] + contacts_states[k][i]);
 	}
 
 	void setContact(uint64_t i, uint64_t k)
@@ -62,18 +63,35 @@ struct Solver
 		});
 		
 		const size_t atoms_count = atoms.size();
-		for (uint64_t i(0); i < atoms_count; ++i) {
-			for (uint64_t k(0); k < atoms_count; ++k) {
-				if (isNewContact(i, k) && atoms[i].parent != atoms[k].parent) {
-					AtomContact contact(i, k);
-					if (contact.isValid(atoms)) {
-						contact.initialize(atoms);
-						atom_contacts.push_back(contact);
-						setContact(i, k);
+		if (frame_count % 2) {
+			for (uint64_t i(0); i < atoms_count; ++i) {
+				for (uint64_t k(0); k < atoms_count; ++k) {
+					if (isNewContact(i, k) && atoms[i].parent != atoms[k].parent) {
+						AtomContact contact(i, k);
+						if (contact.isValid(atoms)) {
+							contact.initialize(atoms);
+							atom_contacts.push_back(contact);
+							setContact(i, k);
+						}
 					}
 				}
 			}
 		}
+		else {
+			for (uint64_t i(atoms_count); i--;) {
+				for (uint64_t k(atoms_count); k--;) {
+					if (isNewContact(i, k) && atoms[i].parent != atoms[k].parent) {
+						AtomContact contact(i, k);
+						if (contact.isValid(atoms)) {
+							contact.initialize(atoms);
+							atom_contacts.push_back(contact);
+							setContact(i, k);
+						}
+					}
+				}
+			}
+		}
+		
 	}
 
 	void applyGravity()
@@ -93,7 +111,7 @@ struct Solver
 		}
 
 		findContacts();
-		const uint32_t iterations_count = 4;
+		const uint32_t iterations_count = 8;
 		for (uint32_t i(iterations_count); i--;) {
 			for (AtomContact& c : atom_contacts) {
 				c.computeImpulse(atoms);
@@ -105,6 +123,7 @@ struct Solver
 		}
 
 		checkBroke();
+		++frame_count;
 	}
 
 	void addAtomToLastObject(const Vec2& position, float mass=1.0f)
@@ -121,7 +140,7 @@ struct Solver
 
 	void checkBroke()
 	{
-		const float threshold = 70000.0f;
+		const float threshold = 700.0f;
 		const float fragile_factor = 0.5f;
 		for (const AtomContact& c : atom_contacts) {
 			ComposedObject& object_1 = *atoms[c.id_a].parent;
@@ -194,6 +213,7 @@ struct Solver
 		}
 	}
 
+	uint32_t frame_count;
 	std::vector<Atom> atoms;
 	std::list<ComposedObject> objects;
 	std::list<AtomContact> atom_contacts;
