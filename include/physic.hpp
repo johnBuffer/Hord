@@ -4,6 +4,7 @@
 #include "physic_objects.hpp"
 #include "contact.hpp"
 #include <set>
+#include <index_vector.hpp>
 
 
 struct Solver
@@ -214,7 +215,7 @@ struct Solver
 	}
 
 	uint32_t frame_count;
-	std::vector<Atom> atoms;
+	IndexVector<Atom> atoms;
 	std::list<ComposedObject> objects;
 	std::list<AtomContact> atom_contacts;
 

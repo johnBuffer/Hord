@@ -19,7 +19,7 @@ int main()
 	constexpr uint32_t WinWidth  = 1920;
 	constexpr uint32_t WinHeight = 1080;
 
-    sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Phys", sf::Style::Fullscreen, settings);
+    sf::RenderWindow window(sf::VideoMode(WinWidth, WinHeight), "Phys", sf::Style::Default, settings);
     window.setFramerateLimit(60);
 
     const float atom_radius = 8.0f;

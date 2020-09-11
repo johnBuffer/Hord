@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <index_vector.hpp>
 #include "vec.hpp"
 
 
@@ -70,7 +71,7 @@ struct ComposedObject
 		, break_free(0)
 	{}
 
-	void addAtom(uint64_t id, std::vector<Atom>& atoms)
+	void addAtom(uint64_t id, IndexVector<Atom>& atoms)
 	{
 		atoms_ids.push_back(id);
 		Atom& new_atom = atoms[id];
@@ -85,7 +86,7 @@ struct ComposedObject
 		computeCenterOfMass(atoms);
 	}
 
-	void computeCenterOfMass(const std::vector<Atom>& atoms)
+	void computeCenterOfMass(const IndexVector<Atom>& atoms)
 	{
 		Vec2 com;
 		for (uint64_t id : atoms_ids) {
@@ -135,7 +136,7 @@ struct ComposedObject
 		applied_force = Vec2(0.0f, 0.0f);
 	}
 
-	void updateState(float dt, std::vector<Atom>& atoms)
+	void updateState(float dt, IndexVector<Atom>& atoms)
 	{
 		if (!moving) {
 			return;
@@ -151,14 +152,14 @@ struct ComposedObject
 		return intertia;
 	}
 
-	void translate(const Vec2& v, std::vector<Atom>& atoms)
+	void translate(const Vec2& v, IndexVector<Atom>& atoms)
 	{
 		for (uint64_t a_id : atoms_ids) {
 			atoms[a_id].position += v;
 		}
 	}
 
-	void rotate(float r, std::vector<Atom>& atoms)
+	void rotate(float r, IndexVector<Atom>& atoms)
 	{
 		for (uint64_t a_id : atoms_ids) {
 			atoms[a_id].position.rotate(center_of_mass, r);
@@ -189,7 +190,7 @@ struct ComposedObject
 		return next_position;
 	}
 
-	void removeAtom(uint64_t id, const std::vector<Atom>& atoms)
+	void removeAtom(uint64_t id, const IndexVector<Atom>& atoms)
 	{
 		uint64_t i = 0;
 		for (uint64_t a_id : atoms_ids) {

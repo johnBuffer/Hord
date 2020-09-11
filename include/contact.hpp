@@ -1,5 +1,6 @@
 #pragma once
 
+#include <index_vector.hpp>
 #include "physic_objects.hpp"
 #include "array.hpp"
 
@@ -97,7 +98,7 @@ struct AtomContact
 		, tick_count(0)
 	{}
 
-	float getDelta(const std::vector<Atom>& atoms) const
+	float getDelta(const IndexVector<Atom>& atoms) const
 	{
 		contact_vec = atoms[id_a].position - atoms[id_b].position;
 		contact_length = contact_vec.getLength();
@@ -106,7 +107,7 @@ struct AtomContact
 	}
 
 	// Needs to be done first, initializes contact vecs
-	bool isValid(const std::vector<Atom>& atoms)
+	bool isValid(const IndexVector<Atom>& atoms)
 	{
 		delta = getDelta(atoms);
 		return delta < 0.0f;
@@ -122,7 +123,7 @@ struct AtomContact
 		return atom.position.plus(collision_vec * atom.radius);
 	}
 
-	void initialize(const std::vector<Atom>& atoms)
+	void initialize(const IndexVector<Atom>& atoms)
 	{
 		const Atom& atom_a = atoms[id_a];
 		const Atom& atom_b = atoms[id_b];
@@ -141,7 +142,7 @@ struct AtomContact
 		initialize_jacobians(atoms);
 	}
 
-	void initialize_jacobians(const std::vector<Atom>& atoms)
+	void initialize_jacobians(const IndexVector<Atom>& atoms)
 	{
 		const Atom& atom_a = atoms[id_a];
 		const Atom& atom_b = atoms[id_b];
@@ -165,9 +166,6 @@ struct AtomContact
 		j_friction[4] = -contact_tangent.y;
 		j_friction[5] = -to_contact_point_b.cross(contact_tangent);
 
-		const float dt = 0.016f;
-		const float bias_factor = 0.05f;
-		bias = bias_factor / dt * std::min(delta, 0.0f);
 		accumulated_lambda = 0.0f;
 	}
 
@@ -187,7 +185,7 @@ struct AtomContact
 		applyImpulse(atom_a, atom_b, impulse_vec);
 	}
 
-	void applyLastImpulse(std::vector<Atom>& atoms)
+	void applyLastImpulse(IndexVector<Atom>& atoms)
 	{
 		++tick_count;
 
@@ -218,7 +216,7 @@ struct AtomContact
 		accumulated_lambda += lambda;
 	}
 
-	void computeImpulse(std::vector<Atom>& atoms)
+	void computeImpulse(IndexVector<Atom>& atoms)
 	{
 		Atom& atom_a = atoms[id_a];
 		Atom& atom_b = atoms[id_b];
@@ -233,6 +231,10 @@ struct AtomContact
 			body_2_velocity.y,
 			atom_b.parent->getAngularVelocity()
 		};
+
+		const float dt = 0.016f;
+		const float bias_factor = 0.05f;
+		bias = bias_factor / dt * std::min(delta, 0.0f);
 
 		// Normal
 		lambda = -(Utils::dot(j, v) + bias) / Utils::dot(j, Utils::mult(inv_m, j));
