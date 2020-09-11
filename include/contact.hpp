@@ -236,24 +236,16 @@ struct AtomContact
 
 		// Friction
 		float lambda_friction = -Utils::dot(j_friction, v) / Utils::dot(j_friction, Utils::mult(inv_m, j_friction));
-		if (lambda_friction > friction * lambda) {
-			lambda_friction = friction * lambda;
-		}
-		else if (lambda_friction < -friction * lambda) {
-			lambda_friction = -friction * lambda;
-		}
-
+		lambda_friction = clampLambdaFriction(lambda_friction);
 		Utils::add(v, Utils::mult(inv_m, Utils::mult(lambda_friction, j_friction)));
 		applyImpulse(atom_a, atom_b, v);
 
 		// Normal
 		const float bias_factor = 0.2f;
 		bias = bias_factor / dt * std::min(delta, 0.0f);
-
 		const float denom = Utils::dot(j, Utils::mult(inv_m, j));
 		lambda = -(Utils::dot(j, v) + bias) / denom;
 		updateAccumulatedLambda();
-
 		impulse = contact_normal * lambda;
 		Utils::add(v, Utils::mult(inv_m, Utils::mult(lambda, j)));
 		applyImpulse(atom_a, atom_b, v);
@@ -265,5 +257,11 @@ struct AtomContact
 		atom_a.parent->angular_velocity = v_bias[2];
 		atom_b.parent->bias_velocity = Vec2(v_bias[3], v_bias[4]);
 		atom_b.parent->angular_velocity = v_bias[5];
+	}
+
+	float clampLambdaFriction(float lambda_friction)
+	{
+		const float max_lambda = friction * lambda;
+		return std::min(std::max(-max_lambda, lambda_friction), max_lambda);
 	}
 };
