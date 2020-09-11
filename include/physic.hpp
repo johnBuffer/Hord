@@ -123,7 +123,7 @@ struct Solver
 			o.updateState(dt, atoms);
 		}
 
-		checkBroke();
+		//checkBroke();
 		++frame_count;
 	}
 

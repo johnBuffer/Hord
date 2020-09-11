@@ -203,12 +203,12 @@ struct AtomContact
 			body_2_velocity.y,
 			atom_b.parent->getAngularVelocity()
 		};
-		addToAccumulatedLambda();
+		updateAccumulatedLambda();
 		Utils::add(v_tmp, Utils::mult(inv_m, Utils::mult(lambda, j)));
 		applyImpulse(atom_a, atom_b, v_tmp);
 	}
 
-	void addToAccumulatedLambda()
+	void updateAccumulatedLambda()
 	{
 		if (accumulated_lambda + lambda < 0) {
 			lambda = -accumulated_lambda;
@@ -233,15 +233,6 @@ struct AtomContact
 		};
 
 		const float dt = 0.016f;
-		const float bias_factor = 0.05f;
-		bias = bias_factor / dt * std::min(delta, 0.0f);
-
-		// Normal
-		lambda = -(Utils::dot(j, v) + bias) / Utils::dot(j, Utils::mult(inv_m, j));
-		addToAccumulatedLambda();
-		impulse = contact_normal * lambda;
-		Utils::add(v, Utils::mult(inv_m, Utils::mult(lambda, j)));
-		applyImpulse(atom_a, atom_b, v);
 
 		// Friction
 		float lambda_friction = -Utils::dot(j_friction, v) / Utils::dot(j_friction, Utils::mult(inv_m, j_friction));
@@ -254,5 +245,25 @@ struct AtomContact
 
 		Utils::add(v, Utils::mult(inv_m, Utils::mult(lambda_friction, j_friction)));
 		applyImpulse(atom_a, atom_b, v);
+
+		// Normal
+		const float bias_factor = 0.2f;
+		bias = bias_factor / dt * std::min(delta, 0.0f);
+
+		const float denom = Utils::dot(j, Utils::mult(inv_m, j));
+		lambda = -(Utils::dot(j, v) + bias) / denom;
+		updateAccumulatedLambda();
+
+		impulse = contact_normal * lambda;
+		Utils::add(v, Utils::mult(inv_m, Utils::mult(lambda, j)));
+		applyImpulse(atom_a, atom_b, v);
+	}
+
+	void applyBiasImpulse(Atom& atom_a, Atom& atom_b, const Array<float, 6>& v_bias)
+	{
+		atom_a.parent->bias_velocity = Vec2(v_bias[0], v_bias[1]);
+		atom_a.parent->angular_velocity = v_bias[2];
+		atom_b.parent->bias_velocity = Vec2(v_bias[3], v_bias[4]);
+		atom_b.parent->angular_velocity = v_bias[5];
 	}
 };
