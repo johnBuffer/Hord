@@ -38,6 +38,10 @@ struct IndexVector
 	// Iterators
 	typename std::vector<T>::iterator begin();
 	typename std::vector<T>::iterator end();
+
+	typename std::vector<T>::const_iterator begin() const;
+	typename std::vector<T>::const_iterator end() const;
+
 	// Number of objects in the array
 	uint64_t size() const;
 
@@ -131,6 +135,18 @@ inline typename std::vector<T>::iterator IndexVector<T>::begin()
 
 template<typename T>
 inline typename std::vector<T>::iterator IndexVector<T>::end()
+{
+	return data.begin() + data_size;
+}
+
+template<typename T>
+inline typename std::vector<T>::const_iterator IndexVector<T>::begin() const
+{
+	return data.begin();
+}
+
+template<typename T>
+inline typename std::vector<T>::const_iterator IndexVector<T>::end() const
 {
 	return data.begin() + data_size;
 }
