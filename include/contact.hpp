@@ -69,6 +69,9 @@ struct AtomContact
 	float bias;
 	float delta;
 	const float friction = 0.25f;
+	const float margin_factor = 0.2f;
+	const float dt = 0.016f;
+	const float bias_factor = 0.2f;
 
 	Array<float, 6> j;
 	Array<float, 6> j_friction;
@@ -103,14 +106,14 @@ struct AtomContact
 		contact_vec = atoms[id_a].position - atoms[id_b].position;
 		contact_length = contact_vec.getLength();
 		contact_normal = contact_vec / contact_length;
-		return contact_length - 2 * atoms[id_a].radius;
+		return contact_length - 2.0f * atoms[id_a].radius;
 	}
 
 	// Needs to be done first, initializes contact vecs
 	bool isValid(const IndexVector<Atom>& atoms)
 	{
 		delta = getDelta(atoms);
-		return delta < 0.0f;
+		return (delta - margin_factor) < 0.0f;
 	}
 
 	Vec2 getContactPointA(const Vec2& collision_vec, const Atom& atom) const
@@ -210,9 +213,8 @@ struct AtomContact
 
 	void updateAccumulatedLambda()
 	{
-		if (accumulated_lambda + lambda < 0) {
-			lambda = -accumulated_lambda;
-		}
+		const bool need_clamp = accumulated_lambda + lambda < 0;
+		lambda = need_clamp * (-accumulated_lambda) + (!need_clamp) * lambda;
 		accumulated_lambda += lambda;
 	}
 
@@ -232,7 +234,8 @@ struct AtomContact
 			atom_b.parent->getAngularVelocity()
 		};
 
-		const float dt = 0.016f;
+		// Bias
+		bias = bias_factor / dt * (delta + margin_factor);
 
 		// Friction
 		float lambda_friction = -Utils::dot(j_friction, v) / Utils::dot(j_friction, Utils::mult(inv_m, j_friction));
@@ -241,22 +244,13 @@ struct AtomContact
 		applyImpulse(atom_a, atom_b, v);
 
 		// Normal
-		const float bias_factor = 0.2f;
-		bias = bias_factor / dt * std::min(delta, 0.0f);
+		// could be precomputed
 		const float denom = Utils::dot(j, Utils::mult(inv_m, j));
 		lambda = -(Utils::dot(j, v) + bias) / denom;
 		updateAccumulatedLambda();
 		impulse = contact_normal * lambda;
 		Utils::add(v, Utils::mult(inv_m, Utils::mult(lambda, j)));
 		applyImpulse(atom_a, atom_b, v);
-	}
-
-	void applyBiasImpulse(Atom& atom_a, Atom& atom_b, const Array<float, 6>& v_bias)
-	{
-		atom_a.parent->bias_velocity = Vec2(v_bias[0], v_bias[1]);
-		atom_a.parent->angular_velocity = v_bias[2];
-		atom_b.parent->bias_velocity = Vec2(v_bias[3], v_bias[4]);
-		atom_b.parent->angular_velocity = v_bias[5];
 	}
 
 	float clampLambdaFriction(float lambda_friction)

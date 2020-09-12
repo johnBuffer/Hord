@@ -95,7 +95,7 @@ int main()
         display_manager.processEvents();
         mouse_pos = sf::Mouse::getPosition(window);
 
-        if (pause) {
+        if (pause && solver.objects.size() < 800) {
             solver.objects.emplace_back();
             solver.addAtomToLastObject(Vec2(800.0f + rand() % 2, 350.0f));
         }
