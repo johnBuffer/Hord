@@ -62,9 +62,7 @@ struct ComposedObject
 	ComposedObject()
 		: center_of_mass()
 		, velocity()
-		, bias_velocity()
 		, angular_velocity(0.0f)
-		, bias_angular_velocity(0.0f)
 		, angle(0.0f)
 		, applied_force(0.0f, 0.0f)
 		, intertia(0.0f)
@@ -136,7 +134,6 @@ struct ComposedObject
 		velocity += (applied_force / mass) * dt;
 		// Reset forces
 		applied_force = Vec2(0.0f, 0.0f);
-		// Reset bias
 	}
 
 	void updateState(float dt, IndexVector<Atom>& atoms)
@@ -144,13 +141,10 @@ struct ComposedObject
 		if (!moving) {
 			return;
 		}
-		translate((velocity.plus(bias_velocity)) * dt, atoms);
+		translate((velocity) * dt, atoms);
 		center_of_mass += velocity * dt;
-		rotate((angular_velocity + bias_angular_velocity) * dt, atoms);
+		rotate(angular_velocity * dt, atoms);
 		angle += angular_velocity * dt;
-
-		bias_velocity = Vec2(0.0f, 0.0f);
-		bias_angular_velocity = 0.0f;
 	}
 
 	float getMomentInertia() const
@@ -218,11 +212,9 @@ struct ComposedObject
 	std::vector<uint64_t> atoms_ids;
 	Vec2 center_of_mass;
 	Vec2 velocity;
-	Vec2 bias_velocity;
 	Vec2 applied_force;
 
 	float angular_velocity;
-	float bias_angular_velocity;
 	float angle;
 
 	float mass;

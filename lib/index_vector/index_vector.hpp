@@ -106,7 +106,7 @@ inline const T& IndexVector<T>::operator[](uint64_t i) const
 template<typename T>
 inline Ptr<T> IndexVector<T>::getPtr(uint64_t id)
 {
-	return Ptr<T>(id, *this, op_ids[id]);
+	return Ptr<T>(id, this, op_ids[id]);
 }
 
 template<typename T>
@@ -200,7 +200,13 @@ inline bool IndexVector<T>::isValid(uint64_t i, uint64_t validity) const
 template<typename T>
 struct Ptr
 {
-	Ptr(uint64_t id_, IndexVector<T>& a, uint64_t vid)
+	Ptr()
+		: id(0)
+		, array(nullptr)
+		, validity_id(0)
+	{}
+
+	Ptr(uint64_t id_, IndexVector<T>* a, uint64_t vid)
 		: id(id_)
 		, array(a)
 		, validity_id(vid)
@@ -208,21 +214,21 @@ struct Ptr
 
 	T* operator->()
 	{
-		return &array[id];
+		return &(*array)[id];
 	}
 
 	T& operator*()
 	{
-		return array[id];
+		return (*array)[id];
 	}
 
 	operator bool() const
 	{
-		return array.isValid(id, validity_id);
+		return array->isValid(id, validity_id) && array;
 	}
 
 private:
 	uint64_t id;
-	IndexVector<T>& array;
+	IndexVector<T>* array;
 	uint64_t validity_id;
 };

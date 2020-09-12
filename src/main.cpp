@@ -29,6 +29,8 @@ int main()
 
     Solver solver;
 
+    srand(time(0));
+
     bool pause = false;
     bool step = false;
     bool building = false;
@@ -40,13 +42,13 @@ int main()
     }
     /*for (uint32_t x(0); x < WinWidth / (2.0f * atom_radius); ++x) {
         solver.addAtomToLastObject(Vec2(0.0f + x * 2.0f * atom_radius, 0.0f));
-    }
+    }*/
     for (uint32_t y(0); y < WinHeight / (2.0f * atom_radius); ++y) {
         solver.addAtomToLastObject(Vec2(0.0f, y * 2.0f * atom_radius));
     }
     for (uint32_t y(0); y < WinHeight / (2.0f * atom_radius); ++y) {
-        solver.addAtomToLastObject(Vec2(WinWidth, y * 2.0f * atom_radius));
-    }*/
+        solver.addAtomToLastObject(Vec2(WinWidth * 0.5f, y * 2.0f * atom_radius));
+    }
 
 	sf::Vector2i mouse_pos;
 
@@ -89,16 +91,23 @@ int main()
         }
     });
 
+    std::cout << solver.atoms.size() << std::endl;
+
     const float dt = 0.016f;
+
+    while (solver.objects.size() < 1000) {
+        solver.objects.emplace_back();
+        solver.addAtomToLastObject(Vec2(rand() % (WinWidth/2 - 20) + 10, rand() % (WinHeight - 20) + 10));
+    }
 
     while (window.isOpen()) {
         display_manager.processEvents();
         mouse_pos = sf::Mouse::getPosition(window);
 
-        if (pause && solver.objects.size() < 800) {
+        /*if (solver.objects.size() < 1500 && pause) {
             solver.objects.emplace_back();
             solver.addAtomToLastObject(Vec2(800.0f + rand() % 2, 350.0f));
-        }
+        }*/
 
         if (building) {
             const sf::Vector2f mouse_world_pos = sf::Vector2f(mouse_pos.x, mouse_pos.y);

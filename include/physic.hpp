@@ -64,40 +64,23 @@ struct Solver
 		});
 		
 		const size_t atoms_count = atoms.size();
-		if (frame_count % 2) {
-			for (uint64_t i(0); i < atoms_count; ++i) {
-				for (uint64_t k(0); k < atoms_count; ++k) {
-					if (isNewContact(i, k) && atoms[i].parent != atoms[k].parent) {
-						AtomContact contact(i, k);
-						if (contact.isValid(atoms)) {
-							contact.initialize(atoms);
-							atom_contacts.push_back(contact);
-							setContact(i, k);
-						}
+		for (uint64_t i(0); i < atoms_count; ++i) {
+			for (uint64_t k(0); k < atoms_count; ++k) {
+				if (isNewContact(i, k) && atoms[i].parent != atoms[k].parent) {
+					AtomContact contact(i, k);
+					if (contact.isValid(atoms)) {
+						contact.initialize(atoms);
+						atom_contacts.push_back(contact);
+						setContact(i, k);
 					}
 				}
 			}
 		}
-		else {
-			for (uint64_t i(atoms_count); i--;) {
-				for (uint64_t k(atoms_count); k--;) {
-					if (isNewContact(i, k) && atoms[i].parent != atoms[k].parent) {
-						AtomContact contact(i, k);
-						if (contact.isValid(atoms)) {
-							contact.initialize(atoms);
-							atom_contacts.push_back(contact);
-							setContact(i, k);
-						}
-					}
-				}
-			}
-		}
-		
 	}
 
 	void applyGravity()
 	{
-		const Vec2 gravity(0.0f, 750.0f);
+		const Vec2 gravity(0.0f, 980.0f);
 		for (ComposedObject& o : objects) {
 			o.accelerate(gravity);
 		}
@@ -112,7 +95,7 @@ struct Solver
 		}
 
 		findContacts();
-		const uint32_t iterations_count = 8;
+		const uint32_t iterations_count = 4;
 		for (uint32_t i(iterations_count); i--;) {
 			for (AtomContact& c : atom_contacts) {
 				c.computeImpulse(atoms);

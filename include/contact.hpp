@@ -3,6 +3,7 @@
 #include <index_vector.hpp>
 #include "physic_objects.hpp"
 #include "array.hpp"
+#include <iostream>
 
 
 struct Utils
@@ -67,9 +68,10 @@ struct AtomContact
 	float lambda;
 	float accumulated_lambda;
 	float bias;
+	float acc_delta;
 	float delta;
 	const float friction = 0.25f;
-	const float margin_factor = 0.2f;
+	const float persistence_margin = 2.0f;
 	const float dt = 0.016f;
 	const float bias_factor = 0.2f;
 
@@ -92,6 +94,8 @@ struct AtomContact
 		, id_b(0)
 		, accumulated_lambda(0.0f)
 		, tick_count(0)
+		, bias(0.0f)
+		, acc_delta(0.0f)
 	{}
 
 	AtomContact(uint64_t a, uint64_t b)
@@ -99,6 +103,8 @@ struct AtomContact
 		, id_b(b)
 		, accumulated_lambda(0.0f)
 		, tick_count(0)
+		, bias(0.0f)
+		, acc_delta(0.0f)
 	{}
 
 	float getDelta(const IndexVector<Atom>& atoms) const
@@ -113,7 +119,7 @@ struct AtomContact
 	bool isValid(const IndexVector<Atom>& atoms)
 	{
 		delta = getDelta(atoms);
-		return (delta - margin_factor) < 0.0f;
+		return (delta - persistence_margin) < 0.0f;
 	}
 
 	Vec2 getContactPointA(const Vec2& collision_vec, const Atom& atom) const
@@ -170,6 +176,13 @@ struct AtomContact
 		j_friction[5] = -to_contact_point_b.cross(contact_tangent);
 
 		accumulated_lambda = 0.0f;
+		// Bias
+		const float acc_factor = 0.6f;
+		acc_delta = acc_delta * acc_factor + delta;
+		/*if (id_a == 258) {
+			std::cout << acc_delta << " " << delta << std::endl;
+		}*/
+		bias = bias_factor / dt * acc_delta;
 	}
 
 	void applyImpulse(Atom& atom_a, Atom& atom_b, const Array<float, 6>& impulse_vec)
@@ -234,9 +247,6 @@ struct AtomContact
 			atom_b.parent->getAngularVelocity()
 		};
 
-		// Bias
-		bias = bias_factor / dt * (delta + margin_factor);
-
 		// Friction
 		float lambda_friction = -Utils::dot(j_friction, v) / Utils::dot(j_friction, Utils::mult(inv_m, j_friction));
 		lambda_friction = clampLambdaFriction(lambda_friction);
@@ -248,7 +258,10 @@ struct AtomContact
 		const float denom = Utils::dot(j, Utils::mult(inv_m, j));
 		lambda = -(Utils::dot(j, v) + bias) / denom;
 		updateAccumulatedLambda();
-		impulse = contact_normal * lambda;
+		impulse = contact_normal * acc_delta;
+		if (std::abs(lambda) > 100000) {
+			std::cout << "BIIG lambda " << lambda << std::endl;
+		}
 		Utils::add(v, Utils::mult(inv_m, Utils::mult(lambda, j)));
 		applyImpulse(atom_a, atom_b, v);
 	}
