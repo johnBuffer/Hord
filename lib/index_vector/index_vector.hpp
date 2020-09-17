@@ -12,6 +12,20 @@ struct Slot
 	uint64_t data_id;
 };
 
+
+template<typename T>
+struct ObjectSlot
+{
+	ObjectSlot(uint64_t id_, T* object_)
+		: id(id_)
+		, object(object_)
+	{}
+
+	uint64_t id;
+	T* object;
+};
+
+
 template<typename T>
 struct IndexVector
 {
@@ -35,6 +49,8 @@ struct IndexVector
 	bool isValid(uint64_t i, uint64_t validity) const;
 	// Returns the ID of the ith element of the data array
 	uint64_t getID(uint64_t i) const;
+	// Returns the ith object and id
+	ObjectSlot<T> getSlotAt(uint64_t i);
 	// Iterators
 	typename std::vector<T>::iterator begin();
 	typename std::vector<T>::iterator end();
@@ -101,6 +117,12 @@ template<typename T>
 inline const T& IndexVector<T>::operator[](uint64_t i) const
 {
 	return getAt(i);
+}
+
+template<typename T>
+inline ObjectSlot<T> IndexVector<T>::getSlotAt(uint64_t i)
+{
+	return ObjectSlot<T>(rids[i], &data[i]);
 }
 
 template<typename T>

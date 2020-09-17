@@ -29,6 +29,7 @@ struct Atom
 		, acceleration()
 		, mass(1.0f)
 		, parent(nullptr)
+		, grid_index(0)
 	{}
 
 	Atom(const Vec2& p)
@@ -37,6 +38,7 @@ struct Atom
 		, acceleration()
 		, mass(1.0f)
 		, parent(nullptr)
+		, grid_index(0)
 	{}
 
 	void reset()
@@ -50,6 +52,7 @@ struct Atom
 	}
 
 	ComposedObject* parent;
+	uint64_t grid_index;
 	Vec2 position, last_position;
 	Vec2 acceleration;
 	float mass;

@@ -15,7 +15,7 @@ struct Solver
 {
 	Solver(uint64_t world_size_x, uint64_t world_size_y)
 		: frame_count(0)
-		, grid(world_size_x, world_size_x, ATOM_SIZE)
+		, grid(ATOM_SIZE, world_size_x, world_size_y)
 	{
 		const uint32_t max_atoms_count = 5000;
 		contacts_states.resize(max_atoms_count);
@@ -40,6 +40,16 @@ struct Solver
 		contacts_states[k][i] = 0;
 	}
 
+	void updateGrid()
+	{
+		grid.clear();
+		const uint64_t atoms_count = atoms.size();
+		for (uint64_t i(0); i < atoms_count; ++i) {
+			ObjectSlot<Atom> slot = atoms.getSlotAt(i);
+			grid.addObject(*slot.object, slot.id);
+		}
+	}
+
 	void findContacts()
 	{
 		// Check for persistence here
@@ -55,7 +65,9 @@ struct Solver
 			}
 		});
 		
-		const size_t atoms_count = atoms.size();
+		updateGrid();
+
+		/*const size_t atoms_count = atoms.size();
 		for (uint64_t i(0); i < atoms_count; ++i) {
 			for (uint64_t k(0); k < atoms_count; ++k) {
 				if (isNewContact(i, k) && atoms[i].parent != atoms[k].parent) {
@@ -64,6 +76,25 @@ struct Solver
 						contact.initialize(atoms);
 						atom_contacts.push_back(contact);
 						setContact(i, k);
+					}
+				}
+			}
+		}*/
+
+		const uint64_t atoms_count = atoms.size();
+		for (uint64_t i(0); i < atoms_count; ++i) {
+
+			ObjectSlot<Atom> slot = atoms.getSlotAt(i);
+			Cell& potential_colliders = grid.getCell(slot.object->grid_index);
+			for (uint64_t k(0); k<potential_colliders.count; ++k) {
+
+				CellObject& a2 = potential_colliders.objects[k];
+				if (isNewContact(slot.id, a2.atom_id) && slot.object->parent != a2.atom->parent) {
+					AtomContact contact(slot.id, a2.atom_id);
+					if (contact.isValid(atoms)) {
+						contact.initialize(atoms);
+						atom_contacts.push_back(contact);
+						setContact(slot.id, a2.atom_id);
 					}
 				}
 			}
@@ -87,7 +118,7 @@ struct Solver
 		}
 
 		findContacts();
-		const uint32_t iterations_count = 16;
+		const uint32_t iterations_count = 8;
 		for (uint32_t i(iterations_count); i--;) {
 			for (AtomContact& c : atom_contacts) {
 				c.computeImpulse(atoms);

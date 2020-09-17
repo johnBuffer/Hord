@@ -31,15 +31,34 @@ struct GridInfo
 };
 
 
+struct CellObject
+{
+	Atom* atom;
+	uint64_t atom_id;
+};
+
+
 struct Cell
 {
+	Cell()
+		: count(0)
+	{}
+
 	uint8_t count;
 	uint8_t type;
-	std::array<Atom*, 8> objects;
+	std::array<CellObject, 8> objects;
 
-	void addObject(Atom& a)
+	void addObject(Atom& a, uint64_t id)
 	{
-		objects[count] = &a;
+		if (count >= 8) {
+			std::cout << "Cell overflow" << std::endl;
+			return;
+		}
+
+		objects[count] = {
+			&a,
+			id
+		};
 		++count;
 	}
 
@@ -53,10 +72,14 @@ struct Cell
 struct Grid
 {
 public:
+	struct Config {
+		static const uint64_t safety_margin = 5;
+	};
+
 	Grid(int32_t cell_size_, int32_t width_, int32_t height_)
 		: cell_size(cell_size_)
-		, width(width_)
-		, height(height_)
+		, width(width_ + 2 * Config::safety_margin)
+		, height(height_ + 2 * Config::safety_margin)
 		, data(Tools::as<uint64_t>(width) * Tools::as<uint64_t>(height))
 	{}
 
@@ -93,7 +116,7 @@ public:
 		return HitPoint(false);
 	}
 
-	void reset()
+	void clear()
 	{
 		for (Cell& c : data) {
 			c.reset();
@@ -126,16 +149,51 @@ public:
 		return float(cell_size) * (sf::Vector2f(grid_coords.x, grid_coords.y) + sf::Vector2f(0.5f, 0.5f));
 	}
 
+	void addObject(Atom& a, uint64_t id)
+	{
+		const sf::Vector2i grid_coords = toGridCoords(a.position);
+		if (!checkCoords(grid_coords.x, grid_coords.y)) {
+			return;
+		}
+
+		const uint64_t grid_index = getIndexFromCoords(grid_coords.x, grid_coords.y);
+		// Add at current position
+		addToCell(grid_index, a, id);
+		// Add left and right
+		addToCell(grid_index - 1, a, id);
+		addToCell(grid_index + 1, a, id);
+		// Add Top
+		addToCell(grid_index - width - 1, a, id);
+		addToCell(grid_index - width    , a, id);
+		addToCell(grid_index - width + 1, a, id);
+		// Add bottom
+		addToCell(grid_index + width - 1, a, id);
+		addToCell(grid_index + width    , a, id);
+		addToCell(grid_index + width + 1, a, id);
+	}
+
+	void addToCell(uint64_t cell_id, Atom& a, uint64_t id)
+	{
+		data[cell_id].addObject(a, id);
+		a.grid_index = cell_id;
+	}
+
+	Cell& getCell(uint64_t id)
+	{
+		return data[id];
+	}
+
 private:
-	int32_t cell_size;
-	int32_t width;
-	int32_t height;
+	const int32_t cell_size;
+	const int32_t width;
+	const int32_t height;
 	mutable std::vector<Cell> data;
 
 private:
-	sf::Vector2i toGridCoords(const sf::Vector2f& v) const
+	template<typename T>
+	sf::Vector2i toGridCoords(const T& v) const
 	{
-		return sf::Vector2i(Tools::as<int32_t>(v.x / cell_size), Tools::as<int32_t>(v.y / cell_size));
+		return sf::Vector2i(Tools::as<int32_t>(v.x / cell_size + Config::safety_margin), Tools::as<int32_t>(v.y / cell_size + Config::safety_margin));
 	}
 
 	void toGridCoords(const sf::Vector2f& v, int32_t* out) const
@@ -151,6 +209,6 @@ private:
 
 	bool checkCoords(int32_t x, int32_t y) const
 	{
-		return (x >= 0 && y >= 0 && x < width && y < height);
+		return (x >= Config::safety_margin-1 && y >= Config::safety_margin-1 && x < width - Config::safety_margin && y < height - Config::safety_margin);
 	}
 };

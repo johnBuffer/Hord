@@ -27,7 +27,7 @@ int main()
     sf::Vector2f start(0.0f, 0.0f);
     sf::Vector2f end(10.0f, 10.0f);
 
-    Solver solver(200, 100);
+    Solver solver(300, 120);
 
     srand(time(0));
 
@@ -84,7 +84,7 @@ int main()
             current_object = &solver.objects.back();
         }
         else {
-            grid.reset();
+            grid.clear();
             if (solver.objects.back().atoms_ids.size()) {
                 current_object->moving = true;
             }
@@ -95,10 +95,10 @@ int main()
 
     const float dt = 0.016f;
 
-    /*while (solver.objects.size() < 1500) {
-        solver.objects.emplace_back();
-        solver.addAtomToLastObject(Vec2(rand() % (WinWidth - 20) + 10, rand() % (WinHeight - 20) + 10));
-    }*/
+	while (solver.objects.size() < 4000) {
+		solver.objects.emplace_back();
+		solver.addAtomToLastObject(Vec2(rand() % (WinWidth - 20) + 10, rand() % (WinHeight - 20) + 10));
+	}
 
     while (window.isOpen()) {
         display_manager.processEvents();
@@ -118,7 +118,9 @@ int main()
         //    }
         //}
         
+		sf::Clock clock;
 		solver.update(dt);
+		std::cout << "Physique time: " << clock.getElapsedTime().asMilliseconds() << std::endl;
 		step = false;
 
         window.clear(sf::Color::Black);
