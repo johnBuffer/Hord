@@ -70,10 +70,12 @@ struct AtomContact
 	float bias;
 	float acc_delta;
 	float delta;
-	const float friction = 0.0f;
-	const float persistence_margin = 10.0f;
+	float inertia_factor;
+
+	const float friction = 0.2f;
+	const float persistence_margin = 1.0f;
 	const float dt = 0.016f;
-	const float bias_factor = 0.2f;
+	const float bias_factor = 0.25f;
 
 	Array<float, 6> j;
 	Array<float, 6> j_friction;
@@ -158,31 +160,36 @@ struct AtomContact
 
 		contact_point = getContactPointA(contact_normal, atom_a);
 		const Vec2 to_contact_point_a = contact_point - atom_a.parent->center_of_mass;
-		const Vec2 to_contact_point_b = getContactPointB(contact_normal, atom_b) - atom_b.parent->center_of_mass;
+		const Vec2 to_contact_point_b = contact_point - atom_b.parent->center_of_mass;
 
-		// Normal
-		j[0] = contact_normal.x;
-		j[1] = contact_normal.y;
-		j[2] = to_contact_point_a.cross(contact_normal);
-		j[3] = -contact_normal.x;
-		j[4] = -contact_normal.y;
-		j[5] = -to_contact_point_b.cross(contact_normal);
+		// Non penetration
+		j = {
+			contact_normal.x,
+			contact_normal.y,
+			to_contact_point_a.cross(contact_normal),
+			-contact_normal.x,
+			-contact_normal.y,
+			-to_contact_point_b.cross(contact_normal)
+		};
+
 		// Friction
 		const Vec2 contact_tangent = contact_normal.getNormal();
-		j_friction[0] = contact_tangent.x;
-		j_friction[1] = contact_tangent.y;
-		j_friction[2] = to_contact_point_a.cross(contact_tangent);
-		j_friction[3] = -contact_tangent.x;
-		j_friction[4] = -contact_tangent.y;
-		j_friction[5] = -to_contact_point_b.cross(contact_tangent);
+		j_friction = {
+			contact_tangent.x,
+			contact_tangent.y,
+			to_contact_point_a.cross(contact_tangent),
+			-contact_tangent.x,
+			-contact_tangent.y,
+			-to_contact_point_b.cross(contact_tangent)
+		};
 
 		accumulated_lambda = 0.0f;
 		// Bias
-		const float acc_factor = 0.6f;
-		acc_delta = acc_delta * acc_factor + std::min(delta, 0.0f);
-
-		//bias = bias_factor / dt * delta;
+		const float acc_factor = 0.5f;
+		acc_delta = acc_delta * acc_factor + delta;
 		bias = bias_factor / dt * acc_delta;
+
+		inertia_factor = 1.0f / Utils::dot(j, Utils::mult(inv_m, j));
 	}
 
 	void applyImpulse(Atom& atom_a, Atom& atom_b, const Array<float, 6>& impulse_vec)
@@ -211,9 +218,6 @@ struct AtomContact
 
 	void applyLastImpulse(IndexVector<Atom>& atoms)
 	{
-		if (delta > 0.0f) {
-			return;
-		}
 		++tick_count;
 
 		Atom& atom_a = atoms[id_a];
@@ -244,10 +248,6 @@ struct AtomContact
 
 	void computeImpulse(IndexVector<Atom>& atoms)
 	{
-		if (delta > 0.0f) {
-			return;
-		}
-
 		Atom& atom_a = atoms[id_a];
 		Atom& atom_b = atoms[id_b];
 
@@ -267,18 +267,16 @@ struct AtomContact
 		float lambda_friction = -Utils::dot(j_friction, v) / Utils::dot(j_friction, Utils::mult(inv_m, j_friction));
 		lambda_friction = clampLambdaFriction(lambda_friction);
 		Utils::add(v, Utils::mult(inv_m, Utils::mult(lambda_friction, j_friction)));
-		applyImpulse(atom_a, atom_b, v);
+		//applyImpulse(atom_a, atom_b, v);
 
-		// Normal
+		// Non penetration
 		// could be precomputed
-		//Array<float, 6> v_bias = v;
-		const float denom = Utils::dot(j, Utils::mult(inv_m, j));
-		lambda = -(Utils::dot(j, v) + bias) / denom;
+		lambda = -(Utils::dot(j, v) + bias) * inertia_factor;
 		updateAccumulatedLambda();
 		Utils::add(v, Utils::mult(inv_m, Utils::mult(lambda, j)));
 		applyImpulse(atom_a, atom_b, v);
 
-		impulse = contact_normal * acc_delta;
+		impulse = contact_normal * lambda;
 		if (std::abs(lambda) > 100000) {
 			std::cout << "BIIG lambda " << lambda << std::endl;
 		}

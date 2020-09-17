@@ -5,7 +5,7 @@
 #include <iostream>
 #include <array>
 #include "vec.hpp"
-#include "physic.hpp"
+#include "physic_objects.hpp"
 
 
 struct HitPoint
@@ -35,7 +35,18 @@ struct Cell
 {
 	uint8_t count;
 	uint8_t type;
-	std::array<Atom, 10> objects;
+	std::array<Atom*, 8> objects;
+
+	void addObject(Atom& a)
+	{
+		objects[count] = &a;
+		++count;
+	}
+
+	void reset()
+	{
+		count = 0;
+	}
 };
 
 
@@ -46,7 +57,7 @@ public:
 		: cell_size(cell_size_)
 		, width(width_)
 		, height(height_)
-		, data(Tools::as<uint64_t>(width) * Tools::as<uint64_t>(height), 0u)
+		, data(Tools::as<uint64_t>(width) * Tools::as<uint64_t>(height))
 	{}
 
 	HitPoint castRayToPoint(const sf::Vector2f& start, const sf::Vector2f& end)
@@ -82,23 +93,10 @@ public:
 		return HitPoint(false);
 	}
 
-	void setCellAtWorld(const sf::Vector2f& world_position, uint8_t value)
-	{
-		const sf::Vector2i grid_coords = toGridCoords(world_position);
-		setCellAt(grid_coords.x, grid_coords.y, value);
-	}
-
 	void reset()
 	{
-		for (uint8_t& i : data) {
-			i = 0;
-		}
-	}
-
-	void setCellAt(int32_t x, int32_t y, uint8_t value)
-	{
-		if (checkCoords(x, y)) {
-			data[getIndexFromCoords(x, y)] = value;
+		for (Cell& c : data) {
+			c.reset();
 		}
 	}
 
@@ -108,10 +106,10 @@ public:
 		return getCellContentAt(grid_coords.x, grid_coords.y);
 	}
 
-	uint8_t getCellContentAt(int32_t x, int32_t y) const
+	uint64_t getCellContentAt(int32_t x, int32_t y) const
 	{
 		if (checkCoords(x, y)) {
-			return data[getIndexFromCoords(x, y)];
+			return data[getIndexFromCoords(x, y)].count;
 		}
 
 		return 0u;
@@ -132,7 +130,7 @@ private:
 	int32_t cell_size;
 	int32_t width;
 	int32_t height;
-	mutable std::vector<uint8_t> data;
+	mutable std::vector<Cell> data;
 
 private:
 	sf::Vector2i toGridCoords(const sf::Vector2f& v) const
@@ -144,15 +142,6 @@ private:
 	{
 		out[0] = Tools::as<int32_t>(v.x / cell_size);
 		out[1] = Tools::as<int32_t>(v.y / cell_size);
-	}
-
-	void clearDebug()
-	{
-		for (uint8_t& c : data) {
-			if (c == 2) {
-				c = 0;
-			}
-		}
 	}
 
 	uint64_t getIndexFromCoords(int32_t x, int32_t y) const

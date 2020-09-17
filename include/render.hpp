@@ -51,6 +51,15 @@ struct Renderer
 			c.setFillColor(sf::Color(255, 255 - red, 255 - red));
 			c.setPosition(a.position.x, a.position.y);
 			target.draw(c, rs);
+
+			if (a.parent->atoms_ids.size() == 1) {
+				sf::RectangleShape angle_indicator(sf::Vector2f(8.0f, 1.0f));
+				angle_indicator.setOrigin(0.0f, 0.5f);
+				angle_indicator.setPosition(a.position.x, a.position.y);
+				angle_indicator.setRotation(a.parent->angle * 57.2958f);
+				angle_indicator.setFillColor(sf::Color::Green);
+				target.draw(angle_indicator, rs);
+			}
 		}
 	}
 

@@ -5,12 +5,17 @@
 #include "contact.hpp"
 #include <set>
 #include <index_vector.hpp>
+#include "grid.hpp"
+
+
+constexpr uint64_t ATOM_SIZE = 8u;
 
 
 struct Solver
 {
-	Solver()
+	Solver(uint64_t world_size_x, uint64_t world_size_y)
 		: frame_count(0)
+		, grid(world_size_x, world_size_x, ATOM_SIZE)
 	{
 		const uint32_t max_atoms_count = 5000;
 		contacts_states.resize(max_atoms_count);
@@ -82,7 +87,7 @@ struct Solver
 		}
 
 		findContacts();
-		const uint32_t iterations_count = 8;
+		const uint32_t iterations_count = 16;
 		for (uint32_t i(iterations_count); i--;) {
 			for (AtomContact& c : atom_contacts) {
 				c.computeImpulse(atoms);
@@ -190,4 +195,6 @@ struct Solver
 	std::list<AtomContact> atom_contacts;
 
 	std::vector<std::vector<uint64_t>> contacts_states;
+
+	Grid grid;
 };
