@@ -70,8 +70,8 @@ struct AtomContact
 	float bias;
 	float acc_delta;
 	float delta;
-	const float friction = 0.25f;
-	const float persistence_margin = 2.0f;
+	const float friction = 0.0f;
+	const float persistence_margin = 10.0f;
 	const float dt = 0.016f;
 	const float bias_factor = 0.2f;
 
@@ -159,6 +159,7 @@ struct AtomContact
 		contact_point = getContactPointA(contact_normal, atom_a);
 		const Vec2 to_contact_point_a = contact_point - atom_a.parent->center_of_mass;
 		const Vec2 to_contact_point_b = getContactPointB(contact_normal, atom_b) - atom_b.parent->center_of_mass;
+
 		// Normal
 		j[0] = contact_normal.x;
 		j[1] = contact_normal.y;
@@ -178,10 +179,9 @@ struct AtomContact
 		accumulated_lambda = 0.0f;
 		// Bias
 		const float acc_factor = 0.6f;
-		acc_delta = acc_delta * acc_factor + delta;
-		/*if (id_a == 258) {
-			std::cout << acc_delta << " " << delta << std::endl;
-		}*/
+		acc_delta = acc_delta * acc_factor + std::min(delta, 0.0f);
+
+		//bias = bias_factor / dt * delta;
 		bias = bias_factor / dt * acc_delta;
 	}
 
@@ -201,8 +201,19 @@ struct AtomContact
 		applyImpulse(atom_a, atom_b, impulse_vec);
 	}
 
+	void applyImpulseBias(Atom& atom_a, Atom& atom_b, const Array<float, 6>& impulse_vec)
+	{
+		atom_a.parent->velocity_bias = Vec2(impulse_vec[0], impulse_vec[1]);
+		atom_a.parent->angular_velocity_bias = impulse_vec[2];
+		atom_b.parent->velocity_bias = Vec2(impulse_vec[3], impulse_vec[4]);
+		atom_b.parent->angular_velocity_bias = impulse_vec[5];
+	}
+
 	void applyLastImpulse(IndexVector<Atom>& atoms)
 	{
+		if (delta > 0.0f) {
+			return;
+		}
 		++tick_count;
 
 		Atom& atom_a = atoms[id_a];
@@ -233,11 +244,16 @@ struct AtomContact
 
 	void computeImpulse(IndexVector<Atom>& atoms)
 	{
+		if (delta > 0.0f) {
+			return;
+		}
+
 		Atom& atom_a = atoms[id_a];
 		Atom& atom_b = atoms[id_b];
 
 		const Vec2 body_1_velocity = atom_a.parent->getVelocity();
 		const Vec2 body_2_velocity = atom_b.parent->getVelocity();
+
 		v = {
 			body_1_velocity.x,
 			body_1_velocity.y,
@@ -255,15 +271,17 @@ struct AtomContact
 
 		// Normal
 		// could be precomputed
+		//Array<float, 6> v_bias = v;
 		const float denom = Utils::dot(j, Utils::mult(inv_m, j));
 		lambda = -(Utils::dot(j, v) + bias) / denom;
 		updateAccumulatedLambda();
+		Utils::add(v, Utils::mult(inv_m, Utils::mult(lambda, j)));
+		applyImpulse(atom_a, atom_b, v);
+
 		impulse = contact_normal * acc_delta;
 		if (std::abs(lambda) > 100000) {
 			std::cout << "BIIG lambda " << lambda << std::endl;
 		}
-		Utils::add(v, Utils::mult(inv_m, Utils::mult(lambda, j)));
-		applyImpulse(atom_a, atom_b, v);
 	}
 
 	float clampLambdaFriction(float lambda_friction)

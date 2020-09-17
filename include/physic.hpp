@@ -35,19 +35,6 @@ struct Solver
 		contacts_states[k][i] = 0;
 	}
 
-	void updateContacts()
-	{
-		for (auto it = atom_contacts.begin(); it != atom_contacts.end(); ++it) {
-			if (it->isValid(atoms)) {
-				it->initialize_jacobians(atoms);
-			}
-			else {
-				removeContact(it->id_a, it->id_b);
-				it = atom_contacts.erase(it)--;
-			}
-		}
-	}
-
 	void findContacts()
 	{
 		// Check for persistence here
@@ -95,7 +82,7 @@ struct Solver
 		}
 
 		findContacts();
-		const uint32_t iterations_count = 4;
+		const uint32_t iterations_count = 8;
 		for (uint32_t i(iterations_count); i--;) {
 			for (AtomContact& c : atom_contacts) {
 				c.computeImpulse(atoms);
@@ -124,7 +111,7 @@ struct Solver
 
 	void checkBroke()
 	{
-		const float threshold = 700.0f;
+		const float threshold = 500.0f;
 		const float fragile_factor = 0.5f;
 		for (const AtomContact& c : atom_contacts) {
 			ComposedObject& object_1 = *atoms[c.id_a].parent;

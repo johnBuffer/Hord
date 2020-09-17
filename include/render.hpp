@@ -46,7 +46,9 @@ struct Renderer
 			c.setOrigin(radius, radius);
 			//srand(a.parent->atoms_ids[0]);
 			//c.setFillColor(sf::Color(rand()%255, rand() % 255, rand() % 255));
-			c.setFillColor(sf::Color::Green);
+			
+			const float red = a.parent->moving ? 10.0f * a.parent->pressure : 0.0f;
+			c.setFillColor(sf::Color(255, 255 - red, 255 - red));
 			c.setPosition(a.position.x, a.position.y);
 			target.draw(c, rs);
 		}

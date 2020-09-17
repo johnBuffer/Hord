@@ -69,6 +69,9 @@ struct ComposedObject
 		, mass(0.0f)
 		, moving(true)
 		, break_free(0)
+		, velocity_bias()
+		, angular_velocity_bias(0.0f)
+		, pressure(0.0f)
 	{}
 
 	void addAtom(uint64_t id, IndexVector<Atom>& atoms)
@@ -128,6 +131,8 @@ struct ComposedObject
 			return;
 		}
 
+		pressure = 0.0f;
+
 		++break_free;
 
 		// Need to add moment
@@ -141,10 +146,14 @@ struct ComposedObject
 		if (!moving) {
 			return;
 		}
-		translate((velocity) * dt, atoms);
-		center_of_mass += velocity * dt;
-		rotate(angular_velocity * dt, atoms);
-		angle += angular_velocity * dt;
+
+		const Vec2 pseudo_velocity = velocity.plus(velocity_bias);
+		translate(pseudo_velocity * dt, atoms);
+		center_of_mass += pseudo_velocity * dt;
+
+		const float pseudo_angular_velocity = angular_velocity + angular_velocity_bias;
+		rotate(pseudo_angular_velocity * dt, atoms);
+		angle += pseudo_angular_velocity * dt;
 	}
 
 	float getMomentInertia() const
@@ -212,13 +221,18 @@ struct ComposedObject
 	std::vector<uint64_t> atoms_ids;
 	Vec2 center_of_mass;
 	Vec2 velocity;
+	Vec2 velocity_bias;
+
 	Vec2 applied_force;
 
 	float angular_velocity;
+	float angular_velocity_bias;
 	float angle;
 
 	float mass;
 	float intertia;
+
+	float pressure;
 
 	bool moving;
 };
