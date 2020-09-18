@@ -44,13 +44,13 @@ struct Cell
 		: count(0)
 	{}
 
-	uint8_t count;
+	uint64_t count;
 	uint8_t type;
-	std::array<CellObject, 8> objects;
+	std::array<CellObject, 16> objects;
 
 	void addObject(Atom& a, uint64_t id)
 	{
-		if (count >= 8) {
+		if (count >= 16) {
 			std::cout << "Cell overflow" << std::endl;
 			return;
 		}
@@ -153,29 +153,30 @@ public:
 	{
 		const sf::Vector2i grid_coords = toGridCoords(a.position);
 		if (!checkCoords(grid_coords.x, grid_coords.y)) {
+			//std::cout << "Skip" << std::endl;
 			return;
 		}
 
 		const uint64_t grid_index = getIndexFromCoords(grid_coords.x, grid_coords.y);
 		// Add at current position
 		addToCell(grid_index, a, id);
+		a.grid_index = grid_index;
 		// Add left and right
 		addToCell(grid_index - 1, a, id);
 		addToCell(grid_index + 1, a, id);
 		// Add Top
-		addToCell(grid_index - width - 1, a, id);
 		addToCell(grid_index - width    , a, id);
+		addToCell(grid_index - width - 1, a, id);
 		addToCell(grid_index - width + 1, a, id);
 		// Add bottom
-		addToCell(grid_index + width - 1, a, id);
 		addToCell(grid_index + width    , a, id);
+		addToCell(grid_index + width - 1, a, id);
 		addToCell(grid_index + width + 1, a, id);
 	}
 
 	void addToCell(uint64_t cell_id, Atom& a, uint64_t id)
 	{
 		data[cell_id].addObject(a, id);
-		a.grid_index = cell_id;
 	}
 
 	Cell& getCell(uint64_t id)

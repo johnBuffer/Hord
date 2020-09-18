@@ -150,10 +150,10 @@ struct AtomContact
 		inv_m[5] = 1.0f / atom_b.parent->getMomentInertia();
 
 		// Jacobians
-		initialize_jacobians(atoms);
+		initializeJacobians(atoms);
 	}
 
-	void initialize_jacobians(const IndexVector<Atom>& atoms)
+	void initializeJacobians(const IndexVector<Atom>& atoms)
 	{
 		const Atom& atom_a = atoms[id_a];
 		const Atom& atom_b = atoms[id_b];

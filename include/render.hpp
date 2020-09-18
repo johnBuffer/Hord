@@ -40,15 +40,17 @@ struct Renderer
 
 	static void renderAtoms(sf::RenderTarget& target, const Solver& solver, const sf::RenderStates& rs)
 	{
-		for (const Atom& a : solver.atoms) {
+		for (uint64_t i(0); i < solver.atoms.size(); ++i) {
+			ObjectSlotConst<Atom> slot = solver.atoms.getSlotAt(i);
+			const Atom& a = *slot.object;
 			const float radius = a.radius;
 			sf::CircleShape c(radius);
 			c.setOrigin(radius, radius);
 			//srand(a.parent->atoms_ids[0]);
 			//c.setFillColor(sf::Color(rand()%255, rand() % 255, rand() % 255));
-			
-			const float red = a.parent->moving ? 10.0f * a.parent->pressure : 0.0f;
-			c.setFillColor(sf::Color(255, 255 - red, 255 - red));
+
+			const sf::Color color = (slot.id == solver.selected) ? sf::Color::Red : (a.debug ? sf::Color::Cyan : sf::Color::White);
+			c.setFillColor(color);
 			c.setPosition(a.position.x, a.position.y);
 			target.draw(c, rs);
 

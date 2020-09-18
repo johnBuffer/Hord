@@ -26,8 +26,8 @@ int main()
     Grid grid(static_cast<uint64_t>(2.0f * atom_radius), WinWidth / static_cast<uint64_t>(2.0f * atom_radius), WinHeight / static_cast<uint64_t>(2.0f * atom_radius));
     sf::Vector2f start(0.0f, 0.0f);
     sf::Vector2f end(10.0f, 10.0f);
-
-    Solver solver(300, 120);
+	
+    Solver solver(300, 200);
 
     srand(time(0));
 
@@ -74,6 +74,19 @@ int main()
         pause = !pause;
     });
 
+	display_manager.event_manager.addKeyPressedCallback(sf::Keyboard::S, [&](const sf::Event& ev) {
+		const sf::Vector2f world_pos = display_manager.getWorldMousePosition();
+		const Vec2 clic_pos(world_pos.x, world_pos.y);
+
+		for (uint64_t i(0); i < solver.atoms.size(); ++i) {
+			ObjectSlot<Atom> slot = solver.atoms.getSlotAt(i);
+			if (slot.object->position.minus(clic_pos).getLength() < 8.0f) {
+				solver.selected = slot.id;
+				break;
+			}
+		}
+	});
+
     ComposedObject* current_object = nullptr;
     display_manager.event_manager.addKeyPressedCallback(sf::Keyboard::A, [&](const sf::Event& ev) {
         building = !building;
@@ -95,10 +108,10 @@ int main()
 
     const float dt = 0.016f;
 
-	while (solver.objects.size() < 4000) {
+	/*while (solver.objects.size() < 1000) {
 		solver.objects.emplace_back();
 		solver.addAtomToLastObject(Vec2(rand() % (WinWidth - 20) + 10, rand() % (WinHeight - 20) + 10));
-	}
+	}*/
 
     while (window.isOpen()) {
         display_manager.processEvents();

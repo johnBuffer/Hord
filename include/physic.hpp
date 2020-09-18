@@ -8,14 +8,15 @@
 #include "grid.hpp"
 
 
-constexpr uint64_t ATOM_SIZE = 8u;
+constexpr uint64_t ATOM_RADIUS = 8u;
 
 
 struct Solver
 {
 	Solver(uint64_t world_size_x, uint64_t world_size_y)
 		: frame_count(0)
-		, grid(ATOM_SIZE, world_size_x, world_size_y)
+		, grid(2*ATOM_RADIUS, world_size_x, world_size_y)
+		, selected(0)
 	{
 		const uint32_t max_atoms_count = 5000;
 		contacts_states.resize(max_atoms_count);
@@ -55,7 +56,7 @@ struct Solver
 		// Check for persistence here
 		atom_contacts.remove_if([&](AtomContact& c) { 
 			if (c.isValid(atoms)) {
-				c.initialize_jacobians(atoms);
+				c.initializeJacobians(atoms);
 				c.applyLastImpulse(atoms);
 				return false;
 			}
@@ -67,28 +68,25 @@ struct Solver
 		
 		updateGrid();
 
-		/*const size_t atoms_count = atoms.size();
-		for (uint64_t i(0); i < atoms_count; ++i) {
-			for (uint64_t k(0); k < atoms_count; ++k) {
-				if (isNewContact(i, k) && atoms[i].parent != atoms[k].parent) {
-					AtomContact contact(i, k);
-					if (contact.isValid(atoms)) {
-						contact.initialize(atoms);
-						atom_contacts.push_back(contact);
-						setContact(i, k);
-					}
-				}
-			}
-		}*/
-
 		const uint64_t atoms_count = atoms.size();
 		for (uint64_t i(0); i < atoms_count; ++i) {
 
 			ObjectSlot<Atom> slot = atoms.getSlotAt(i);
+			slot.object->debug = 0;
 			Cell& potential_colliders = grid.getCell(slot.object->grid_index);
+
+			if (slot.id == selected) {
+				std::cout << int(potential_colliders.count) << std::endl;
+			}
+
 			for (uint64_t k(0); k<potential_colliders.count; ++k) {
 
 				CellObject& a2 = potential_colliders.objects[k];
+
+				if (a2.atom_id == selected) {
+					slot.object->debug = 1;
+				}
+
 				if (isNewContact(slot.id, a2.atom_id) && slot.object->parent != a2.atom->parent) {
 					AtomContact contact(slot.id, a2.atom_id);
 					if (contact.isValid(atoms)) {
@@ -228,4 +226,6 @@ struct Solver
 	std::vector<std::vector<uint64_t>> contacts_states;
 
 	Grid grid;
+
+	uint64_t selected;
 };

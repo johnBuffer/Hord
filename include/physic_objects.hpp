@@ -57,6 +57,8 @@ struct Atom
 	Vec2 acceleration;
 	float mass;
 	float radius = 8.0f;
+
+	bool debug;
 };
 
 

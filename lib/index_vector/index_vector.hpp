@@ -27,6 +27,19 @@ struct ObjectSlot
 
 
 template<typename T>
+struct ObjectSlotConst
+{
+	ObjectSlotConst(uint64_t id_, const T* object_)
+		: id(id_)
+		, object(object_)
+	{}
+
+	uint64_t id;
+	const T* object;
+};
+
+
+template<typename T>
 struct IndexVector
 {
 	IndexVector()
@@ -51,6 +64,7 @@ struct IndexVector
 	uint64_t getID(uint64_t i) const;
 	// Returns the ith object and id
 	ObjectSlot<T> getSlotAt(uint64_t i);
+	ObjectSlotConst<T> getSlotAt(uint64_t i) const;
 	// Iterators
 	typename std::vector<T>::iterator begin();
 	typename std::vector<T>::iterator end();
@@ -123,6 +137,12 @@ template<typename T>
 inline ObjectSlot<T> IndexVector<T>::getSlotAt(uint64_t i)
 {
 	return ObjectSlot<T>(rids[i], &data[i]);
+}
+
+template<typename T>
+inline ObjectSlotConst<T> IndexVector<T>::getSlotAt(uint64_t i) const
+{
+	return ObjectSlotConst<T>(rids[i], &data[i]);
 }
 
 template<typename T>
