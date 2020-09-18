@@ -6,6 +6,7 @@
 #include <set>
 #include <index_vector.hpp>
 #include "grid.hpp"
+#include "sound_player.hpp"
 
 
 constexpr uint64_t ATOM_RADIUS = 8u;
@@ -23,6 +24,8 @@ struct Solver
 		for (std::vector<uint64_t>& v : contacts_states) {
 			v.resize(max_atoms_count);
 		}
+
+		sound = SoundPlayer::registerSound("../res/impact.wav");
 	}
 
 	bool isNewContact(uint64_t i, uint64_t k) const
@@ -75,9 +78,9 @@ struct Solver
 			slot.object->debug = 0;
 			Cell& potential_colliders = grid.getCell(slot.object->grid_index);
 
-			if (slot.id == selected) {
+			/*if (slot.id == selected) {
 				std::cout << int(potential_colliders.count) << std::endl;
-			}
+			}*/
 
 			for (uint64_t k(0); k<potential_colliders.count; ++k) {
 
@@ -90,6 +93,7 @@ struct Solver
 				if (isNewContact(slot.id, a2.atom_id) && slot.object->parent != a2.atom->parent) {
 					AtomContact contact(slot.id, a2.atom_id);
 					if (contact.isValid(atoms)) {
+						SoundPlayer::playInstanceOf(sound);
 						contact.initialize(atoms);
 						atom_contacts.push_back(contact);
 						setContact(slot.id, a2.atom_id);
@@ -228,4 +232,6 @@ struct Solver
 	Grid grid;
 
 	uint64_t selected;
+
+	uint64_t sound;
 };

@@ -104,7 +104,7 @@ int main()
         }
     });
 
-    std::cout << solver.atoms.size() << std::endl;
+    //std::cout << solver.atoms.size() << std::endl;
 
     const float dt = 0.016f;
 
@@ -133,7 +133,7 @@ int main()
         
 		sf::Clock clock;
 		solver.update(dt);
-		std::cout << "Physique time: " << clock.getElapsedTime().asMilliseconds() << std::endl;
+		//std::cout << "Physique time: " << clock.getElapsedTime().asMilliseconds() << std::endl;
 		step = false;
 
         window.clear(sf::Color::Black);
