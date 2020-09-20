@@ -25,7 +25,7 @@ struct Solver
 			v.resize(max_atoms_count);
 		}
 
-		sound = SoundPlayer::registerSound("../res/impact.wav");
+		sound = SoundPlayer::registerSound("../res/impact.wav", 8);
 	}
 
 	bool isNewContact(uint64_t i, uint64_t k) const
@@ -93,7 +93,6 @@ struct Solver
 				if (isNewContact(slot.id, a2.atom_id) && slot.object->parent != a2.atom->parent) {
 					AtomContact contact(slot.id, a2.atom_id);
 					if (contact.isValid(atoms)) {
-						SoundPlayer::playInstanceOf(sound);
 						contact.initialize(atoms);
 						atom_contacts.push_back(contact);
 						setContact(slot.id, a2.atom_id);
@@ -124,6 +123,9 @@ struct Solver
 		for (uint32_t i(iterations_count); i--;) {
 			for (AtomContact& c : atom_contacts) {
 				c.computeImpulse(atoms);
+				if (!i && c.tick_count == 0 && std::abs(c.lambda) > 10.0f) {
+					SoundPlayer::playInstanceOf(sound);
+				}
 			}
 		}
 

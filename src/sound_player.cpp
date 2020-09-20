@@ -23,17 +23,19 @@ void SoundPlayer::playInstanceOf(size_t soundID)
     SoundHandler& handler = _buffers[soundID];
     std::list<sf::Sound>& soundList(handler.livingSounds);
 
-    soundList.push_back(sf::Sound());
-    sf::Sound& newSound = soundList.back();
-    newSound.setBuffer(_buffers[soundID].soundBuffer);
-	newSound.setVolume(20.0f);
-    newSound.play();
-
-    if (soundList.size() > handler.maxLivingSounds)
+	if (soundList.size() < handler.maxLivingSounds)
+	{
+		soundList.push_back(sf::Sound());
+		sf::Sound& newSound = soundList.back();
+		newSound.setBuffer(_buffers[soundID].soundBuffer);
+		newSound.setVolume(20.0f);
+		newSound.play();
+	}
+   /* if (soundList.size() > handler.maxLivingSounds)
     {
         soundList.front().stop();
         soundList.pop_front();
-    }
+    }*/
 
     handler.update();
 }
