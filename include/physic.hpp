@@ -119,13 +119,10 @@ struct Solver
 		}
 
 		findContacts();
-		const uint32_t iterations_count = 8;
+		const uint32_t iterations_count = 4;
 		for (uint32_t i(iterations_count); i--;) {
 			for (AtomContact& c : atom_contacts) {
 				c.computeImpulse(atoms);
-				if (!i && c.tick_count == 0 && std::abs(c.lambda) > 10.0f) {
-					SoundPlayer::playInstanceOf(sound);
-				}
 			}
 		}
 
@@ -133,7 +130,7 @@ struct Solver
 			o.updateState(dt, atoms);
 		}
 
-		//checkBroke();
+		checkBroke();
 		++frame_count;
 	}
 

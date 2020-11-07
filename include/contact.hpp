@@ -272,14 +272,18 @@ struct AtomContact
 		// Non penetration
 		// could be precomputed
 		lambda = -(Utils::dot(j, v) + bias) * inertia_factor;
+		const float max_lambda = 100000.0f;
+		if (std::abs(lambda) > max_lambda) {
+			lambda = max_lambda * (lambda >= 0 ? 1.0f : -1.0f);
+		}
 		updateAccumulatedLambda();
 		Utils::add(v, Utils::mult(inv_m, Utils::mult(lambda, j)));
 		applyImpulse(atom_a, atom_b, v);
 
 		impulse = contact_normal * lambda;
-		if (std::abs(lambda) > 100000) {
+		/*if (std::abs(lambda) > 100000) {
 			std::cout << "BIIG lambda " << lambda << std::endl;
-		}
+		}*/
 	}
 
 	float clampLambdaFriction(float lambda_friction)
