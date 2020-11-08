@@ -98,6 +98,7 @@ struct AtomContact
 		, tick_count(0)
 		, bias(0.0f)
 		, acc_delta(0.0f)
+		, lambda(0.0f)
 	{}
 
 	AtomContact(uint64_t a, uint64_t b)
@@ -107,6 +108,7 @@ struct AtomContact
 		, tick_count(0)
 		, bias(0.0f)
 		, acc_delta(0.0f)
+		, lambda(0.0f)
 	{}
 
 	float getDelta(const IndexVector<Atom>& atoms) const
@@ -267,7 +269,7 @@ struct AtomContact
 		float lambda_friction = -Utils::dot(j_friction, v) / Utils::dot(j_friction, Utils::mult(inv_m, j_friction));
 		lambda_friction = clampLambdaFriction(lambda_friction);
 		Utils::add(v, Utils::mult(inv_m, Utils::mult(lambda_friction, j_friction)));
-		//applyImpulse(atom_a, atom_b, v);
+		applyImpulse(atom_a, atom_b, v);
 
 		// Non penetration
 		// could be precomputed
